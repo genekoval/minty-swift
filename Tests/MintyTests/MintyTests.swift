@@ -1,11 +1,11 @@
-    import XCTest
-    @testable import Minty
+import XCTest
+@testable import Minty
 
-    final class MintyTests: XCTestCase {
-        func testExample() {
-            // This is an example of a functional test case.
-            // Use XCTAssert and related functions to verify your tests produce the correct
-            // results.
-            XCTAssertEqual(Minty().text, "Hello, World!")
-        }
+final class MintyTests: XCTestCase {
+    func testConnection() throws {
+        let repo: MintyRepo = try ZiplineClient(host: "nova.aur", port: 5077)
+        let info = try repo.getServerInfo()
+
+        XCTAssertFalse(info.version.isEmpty)
     }
+}

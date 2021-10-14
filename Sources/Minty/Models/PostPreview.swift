@@ -1,7 +1,7 @@
 import Foundation
 import Zipline
 
-public struct PostPreview: ZiplineObject {
+public struct PostPreview: Codable, Hashable, Identifiable, ZiplineObject {
     public var id: String = ""
     public var title: String?
     public var previewId: String?

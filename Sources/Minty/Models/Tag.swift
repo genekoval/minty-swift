@@ -1,7 +1,7 @@
 import Foundation
 import Zipline
 
-public struct Tag: ZiplineObject {
+public struct Tag: Codable, Hashable, Identifiable, ZiplineObject {
     public var id: String = ""
     public var name: String = ""
     public var aliases: [String] = []

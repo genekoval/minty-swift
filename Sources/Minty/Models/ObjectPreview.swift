@@ -1,6 +1,6 @@
 import Zipline
 
-public struct ObjectPreview: ZiplineObject, Equatable {
+public struct ObjectPreview: Codable, Hashable, Identifiable, ZiplineObject {
     public var id: String = ""
     public var previewId: String?
     public var mimeType: String = ""

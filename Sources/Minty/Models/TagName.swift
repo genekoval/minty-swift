@@ -1,6 +1,6 @@
 import Zipline
 
-public struct TagName: ZiplineObject {
+public struct TagName: Codable, Hashable, ZiplineObject {
     public var name: String = ""
     public var aliases: [String] = []
 

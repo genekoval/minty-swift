@@ -1,7 +1,7 @@
 import Foundation
 import Zipline
 
-public struct Object: ZiplineObject {
+public struct Object: Codable, Hashable, Identifiable, ZiplineObject {
     public var id: String = ""
     public var hash: String = ""
     public var size: DataSize = DataSize()

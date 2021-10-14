@@ -1,7 +1,7 @@
 import Foundation
 import Zipline
 
-public struct Comment: ZiplineObject, Equatable {
+public struct Comment: Codable, Hashable, Identifiable, ZiplineObject {
     public var id: String = ""
     public var content: String = ""
     public var indent: UInt32 = 0

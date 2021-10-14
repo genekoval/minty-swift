@@ -1,6 +1,6 @@
 import Zipline
 
-public struct DataSize: ZiplineObject {
+public struct DataSize: Codable, Hashable, ZiplineObject {
     public var bytes: UInt64 = 0
     public var formatted: String = ""
 

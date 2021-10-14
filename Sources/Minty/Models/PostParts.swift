@@ -1,6 +1,6 @@
 import Zipline
 
-public struct PostParts: ZiplineObject, Equatable {
+public struct PostParts: Codable, Hashable, ZiplineObject {
     public var title: String?
     public var description: String?
     public var objects: [String] = []

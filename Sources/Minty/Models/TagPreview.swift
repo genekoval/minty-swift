@@ -1,6 +1,6 @@
 import Zipline
 
-public struct TagPreview: ZiplineObject {
+public struct TagPreview: Codable, Hashable, Identifiable, ZiplineObject {
     public var id: String = ""
     public var name: String = ""
     public var avatar: String?

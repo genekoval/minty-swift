@@ -1,6 +1,6 @@
 import Zipline
 
-public struct Source: ZiplineObject {
+public struct Source: Codable, Hashable, Identifiable, ZiplineObject {
     public var id: String = ""
     public var url: String = ""
     public var icon: String?

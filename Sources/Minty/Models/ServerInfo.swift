@@ -1,6 +1,6 @@
 import Zipline
 
-public struct ObjectSource: ZiplineObject, Equatable {
+public struct ObjectSource: Codable, Hashable, ZiplineObject {
     public var bucketId: String = ""
     public var host: String?
     public var port: UInt16 = 0
@@ -14,7 +14,7 @@ public struct ObjectSource: ZiplineObject, Equatable {
     public init() { }
 }
 
-public struct ServerInfo: ZiplineObject, Equatable {
+public struct ServerInfo: Codable, Hashable, ZiplineObject {
     public var objectSource: ObjectSource = ObjectSource()
     public var version: String = ""
 

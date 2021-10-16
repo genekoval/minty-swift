@@ -1,13 +1,23 @@
 import Foundation
 import Zipline
 
-let formatter = DateFormatter()
+private let dateFormatter: ISO8601DateFormatter = {
+    let formatter = ISO8601DateFormatter()
+
+    formatter.formatOptions = [
+        .withFractionalSeconds,
+        .withInternetDateTime,
+        .withSpaceBetweenDateAndTime
+    ]
+
+    return formatter
+}()
 
 extension Date: ZiplineCodable {
     public init(from decoder: ZiplineDecoder) throws {
         let string = try String(from: decoder)
 
-        guard let date = formatter.date(from: string) else {
+        guard let date = dateFormatter.date(from: string) else {
             throw ZiplineCoderError.badConversion(
                 message: "Failed to parse date: \(string)"
             )
@@ -17,6 +27,6 @@ extension Date: ZiplineCodable {
     }
 
     public func encode(to encoder: ZiplineEncoder) {
-        formatter.string(from: self).encode(to: encoder)
+        dateFormatter.string(from: self).encode(to: encoder)
     }
 }

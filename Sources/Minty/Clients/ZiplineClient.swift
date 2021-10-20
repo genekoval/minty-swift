@@ -1,3 +1,4 @@
+import Foundation
 import Fstore
 import Zipline
 
@@ -123,10 +124,14 @@ public final class ZiplineClient: MintyRepo {
         try connect().request(event: .getObject, objectId)
     }
 
-    public func getObjectData(objectId: String) throws -> DataStream {
+    public func getObjectData(
+        objectId: String,
+        handler: (Data) -> Void
+    ) throws {
         try objectStore.getObject(
             bucketId: info.objectSource.bucketId,
-            objectId: objectId
+            objectId: objectId,
+            handler: handler
         )
     }
 

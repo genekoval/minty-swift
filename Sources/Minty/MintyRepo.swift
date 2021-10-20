@@ -1,4 +1,4 @@
-import Zipline
+import Foundation
 
 public protocol MintyRepo {
     func addComment(
@@ -46,7 +46,7 @@ public protocol MintyRepo {
 
     func getObject(objectId: String) throws -> Object
 
-    func getObjectData(objectId: String) throws -> DataStream
+    func getObjectData(objectId: String, handler: (Data) -> Void) throws
 
     func getPost(postId: String) throws -> Post
 

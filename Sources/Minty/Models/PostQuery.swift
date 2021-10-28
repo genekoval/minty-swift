@@ -28,8 +28,8 @@ public struct PostQuery: ZiplineObject {
         public init() { }
     }
 
-    public var from: Int8 = 0
-    public var size: Int8 = 0
+    public var from: UInt32 = 0
+    public var size: UInt32 = 0
     public var text: String?
     public var tags: [String] = []
     public var sort: Sort = Sort()

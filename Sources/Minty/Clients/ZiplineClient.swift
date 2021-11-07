@@ -173,11 +173,14 @@ public final class ZiplineClient: MintyRepo {
     public func setPostDescription(
         postId: String,
         description: String
-    ) throws -> String? {
+    ) throws -> Modification<String?> {
         try connect().request(event: .setPostDescription, postId, description)
     }
 
-    public func setPostTitle(postId: String, title: String) throws -> String? {
+    public func setPostTitle(
+        postId: String,
+        title: String
+    ) throws -> Modification<String?> {
         try connect().request(event: .setPostTitle, postId, title)
     }
 

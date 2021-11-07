@@ -69,9 +69,12 @@ public protocol MintyRepo {
     func setPostDescription(
         postId: String,
         description: String
-    ) throws -> String?
+    ) throws -> Modification<String?>
 
-    func setPostTitle(postId: String, title: String) throws -> String?
+    func setPostTitle(
+        postId: String,
+        title: String
+    ) throws -> Modification<String?>
 
     func setTagDescription(tagId: String, description: String) throws -> String?
 

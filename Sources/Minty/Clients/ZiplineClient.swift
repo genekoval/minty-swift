@@ -93,15 +93,18 @@ public final class ZiplineClient: MintyRepo {
         try connect().send(event: .deletePost, postId)
     }
 
-    public func deletePostObjects(postId: String, objects: [String]) throws {
-        try connect().send(event: .deletePostObjects, postId, objects)
+    public func deletePostObjects(
+        postId: String,
+        objects: [String]
+    ) throws -> Date {
+        try connect().request(event: .deletePostObjects, postId, objects)
     }
 
     public func deletePostObjects(
         postId: String,
         ranges: [Range<Int32>]
-    ) throws {
-        try connect().send(event: .deletePostObjectsRanges, postId, ranges)
+    ) throws -> Date {
+        try connect().request(event: .deletePostObjectsRanges, postId, ranges)
     }
 
     public func deletePostTag(postId: String, tagId: String) throws {

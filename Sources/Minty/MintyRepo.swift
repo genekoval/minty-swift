@@ -32,9 +32,12 @@ public protocol MintyRepo {
 
     func deletePost(postId: String) throws
 
-    func deletePostObjects(postId: String, objects: [String]) throws
+    func deletePostObjects(postId: String, objects: [String]) throws -> Date
 
-    func deletePostObjects(postId: String, ranges: [Range<Int32>]) throws
+    func deletePostObjects(
+        postId: String,
+        ranges: [Range<Int32>]
+    ) throws -> Date
 
     func deletePostTag(postId: String, tagId: String) throws
 

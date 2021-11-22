@@ -13,6 +13,7 @@ enum MintyEvent: UInt32, ZiplineEncodable {
     case addTagSource
     case deletePost
     case deletePostObjects
+    case deletePostObjectsRanges
     case deletePostTag
     case deleteTag
     case deleteTagAlias

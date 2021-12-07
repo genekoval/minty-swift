@@ -26,6 +26,7 @@ enum MintyEvent: UInt32, ZiplineEncodable {
     case getTag
     case getTags
     case movePostObject
+    case movePostObjects
     case setCommentContent
     case setPostDescription
     case setPostTitle

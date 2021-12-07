@@ -69,6 +69,12 @@ public protocol MintyRepo {
         newIndex: UInt32
     ) throws
 
+    func movePostObjects(
+        postId: String,
+        objects: [String],
+        destination: String?
+    ) throws -> Date
+
     func setCommentContent(commentId: String, content: String) throws -> String
 
     func setPostDescription(

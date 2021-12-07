@@ -170,6 +170,19 @@ public final class ZiplineClient: MintyRepo {
         try connect().send(event: .movePostObject, postId, oldIndex, newIndex)
     }
 
+    public func movePostObjects(
+        postId: String,
+        objects: [String],
+        destination: String?
+    ) throws -> Date {
+        try connect().request(
+            event: .movePostObjects,
+            postId,
+            objects,
+            destination
+        )
+    }
+
     public func setCommentContent(
         commentId: String,
         content: String

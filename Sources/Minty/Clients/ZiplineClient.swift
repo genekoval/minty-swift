@@ -50,14 +50,14 @@ public final class ZiplineClient: MintyRepo {
     public func addObjectData(
         count: Int,
         data: @escaping (DataWriter) -> Void
-    ) throws -> String {
+    ) throws -> ObjectPreview {
         try connect().request(
             event: .addObjectData,
             ObjectPart(count: count, src: data)
         )
     }
 
-    public func addObjectsUrl(url: String) throws -> [String] {
+    public func addObjectsUrl(url: String) throws -> [ObjectPreview] {
         try connect().request(event: .addObjectsUrl, url)
     }
 
@@ -69,7 +69,7 @@ public final class ZiplineClient: MintyRepo {
         postId: String,
         objects: [String],
         position: UInt32
-    ) throws -> [ObjectPreview] {
+    ) throws -> Date {
         try connect().request(event: .addPostObjects, postId, objects, position)
     }
 

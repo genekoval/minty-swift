@@ -10,9 +10,9 @@ public protocol MintyRepo {
     func addObjectData(
         count: Int,
         data: @escaping (DataWriter) -> Void
-    ) throws -> String
+    ) throws -> ObjectPreview
 
-    func addObjectsUrl(url: String) throws -> [String]
+    func addObjectsUrl(url: String) throws -> [ObjectPreview]
 
     func addPost(parts: PostParts) throws -> String
 
@@ -20,7 +20,7 @@ public protocol MintyRepo {
         postId: String,
         objects: [String],
         position: UInt32
-    ) throws -> [ObjectPreview]
+    ) throws -> Date
 
     func addPostTag(postId: String, tagId: String) throws
 

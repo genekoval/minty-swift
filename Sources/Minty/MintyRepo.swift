@@ -51,7 +51,7 @@ public protocol MintyRepo {
 
     func getObject(objectId: String) throws -> Object
 
-    func getObjectData(objectId: String, handler: (Data) -> Void) throws
+    func getObjectData(objectId: String, handler: (Data) throws -> Void) throws
 
     func getPost(postId: String) throws -> Post
 

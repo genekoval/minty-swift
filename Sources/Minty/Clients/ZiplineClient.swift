@@ -133,7 +133,7 @@ public final class ZiplineClient: MintyRepo {
 
     public func getObjectData(
         objectId: String,
-        handler: (Data) -> Void
+        handler: (Data) throws -> Void
     ) throws {
         try objectStore.getObject(
             bucketId: info.objectSource.bucketId,

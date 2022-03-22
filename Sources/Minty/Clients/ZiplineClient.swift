@@ -77,6 +77,10 @@ public final class ZiplineClient: MintyRepo {
         try connect().send(event: .addPostTag, postId, tagId)
     }
 
+    public func addRelatedPost(postId: String, related: String) throws {
+        try connect().send(event: .addRelatedPost, postId, related)
+    }
+
     public func addTag(name: String) throws -> String {
         try connect().request(event: .addTag, name)
     }
@@ -109,6 +113,10 @@ public final class ZiplineClient: MintyRepo {
 
     public func deletePostTag(postId: String, tagId: String) throws {
         try connect().send(event: .deletePostTag, postId, tagId)
+    }
+
+    public func deleteRelatedPost(postId: String, related: String) throws {
+        try connect().send(event: .deleteRelatedPost, postId, related)
     }
 
     public func deleteTag(tagId: String) throws {

@@ -24,6 +24,8 @@ public protocol MintyRepo {
 
     func addPostTag(postId: String, tagId: String) throws
 
+    func addRelatedPost(postId: String, related: String) throws
+
     func addTag(name: String) throws -> String
 
     func addTagAlias(tagId: String, alias: String) throws -> TagName
@@ -40,6 +42,8 @@ public protocol MintyRepo {
     ) throws -> Date
 
     func deletePostTag(postId: String, tagId: String) throws
+
+    func deleteRelatedPost(postId: String, related: String) throws
 
     func deleteTag(tagId: String) throws
 

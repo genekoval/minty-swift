@@ -8,6 +8,7 @@ public struct Post: Codable, Hashable, Identifiable, ZiplineObject {
     public var dateCreated: Date = Date()
     public var dateModified: Date = Date()
     public var objects: [ObjectPreview] = []
+    public var posts: [PostPreview] = []
     public var tags: [TagPreview] = []
 
     public var coders: [Coder<Self>] {[
@@ -17,6 +18,7 @@ public struct Post: Codable, Hashable, Identifiable, ZiplineObject {
         Coder(\Self.dateCreated),
         Coder(\Self.dateModified),
         Coder(\Self.objects),
+        Coder(\Self.posts),
         Coder(\Self.tags)
     ]}
 

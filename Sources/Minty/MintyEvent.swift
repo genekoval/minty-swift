@@ -9,6 +9,7 @@ enum MintyEvent: UInt32, ZiplineEncodable {
     case addPostObjects
     case addPostTag
     case addRelatedPost
+    case addReply
     case addTag
     case addTagAlias
     case addTagSource

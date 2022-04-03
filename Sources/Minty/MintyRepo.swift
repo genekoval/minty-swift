@@ -19,12 +19,14 @@ public protocol MintyRepo {
     func addPostObjects(
         postId: String,
         objects: [String],
-        position: UInt32
+        position: Int16
     ) throws -> Date
 
     func addPostTag(postId: String, tagId: String) throws
 
     func addRelatedPost(postId: String, related: String) throws
+
+    func addReply(parentId: String, content: String) throws -> Comment
 
     func addTag(name: String) throws -> String
 

@@ -68,7 +68,7 @@ public final class ZiplineClient: MintyRepo {
     public func addPostObjects(
         postId: String,
         objects: [String],
-        position: UInt32
+        position: Int16
     ) throws -> Date {
         try connect().request(event: .addPostObjects, postId, objects, position)
     }
@@ -79,6 +79,10 @@ public final class ZiplineClient: MintyRepo {
 
     public func addRelatedPost(postId: String, related: String) throws {
         try connect().send(event: .addRelatedPost, postId, related)
+    }
+
+    public func addReply(parentId: String, content: String) throws -> Comment {
+        try connect().request(event: .addReply, parentId, content)
     }
 
     public func addTag(name: String) throws -> String {

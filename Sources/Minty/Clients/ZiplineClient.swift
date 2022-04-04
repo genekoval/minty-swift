@@ -39,12 +39,8 @@ public final class ZiplineClient: MintyRepo {
         Minty.connect(host: host, port: port)
     }
 
-    public func addComment(
-        postId: String,
-        parentId: String?,
-        content: String
-    ) throws -> Comment {
-        try connect().request(event: .addComment, postId, parentId, content)
+    public func addComment(postId: String, content: String) throws -> Comment {
+        try connect().request(event: .addComment, postId, content)
     }
 
     public func addObjectData(

@@ -1,11 +1,7 @@
 import Foundation
 
 public protocol MintyRepo {
-    func addComment(
-        postId: String,
-        parentId: String?,
-        content: String
-    ) throws -> Comment
+    func addComment(postId: String, content: String) throws -> Comment
 
     func addObjectData(
         count: Int,

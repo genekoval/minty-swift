@@ -1,8 +1,9 @@
+import Foundation
 import Zipline
 
 public struct ObjectPreview: Codable, Hashable, Identifiable, ZiplineObject {
-    public var id: String = ""
-    public var previewId: String?
+    public var id: UUID = .empty
+    public var previewId: UUID?
     public var type: String = ""
     public var subtype: String = ""
 

@@ -1,10 +1,11 @@
+import Foundation
 import Zipline
 
 public struct PostParts: Codable, Hashable, ZiplineObject {
     public var title: String?
     public var description: String?
-    public var objects: [String] = []
-    public var tags: [String] = []
+    public var objects: [UUID] = []
+    public var tags: [UUID] = []
 
     public var coders: [Coder<Self>] {[
         Coder(\Self.title),

@@ -2,12 +2,12 @@ import Foundation
 import Zipline
 
 public struct Tag: Codable, Hashable, Identifiable, ZiplineObject {
-    public var id: String = ""
+    public var id: UUID = .empty
     public var name: String = ""
     public var aliases: [String] = []
     public var description: String?
-    public var avatar: String?
-    public var banner: String?
+    public var avatar: UUID?
+    public var banner: UUID?
     public var sources: [Source] = []
     public var postCount: UInt32 = 0
     public var dateCreated: Date = Date()

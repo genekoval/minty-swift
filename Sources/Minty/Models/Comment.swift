@@ -2,9 +2,9 @@ import Foundation
 import Zipline
 
 public struct Comment: Codable, Hashable, Identifiable, ZiplineObject {
-    public var id: String = ""
+    public var id: UUID = .empty
     public var content: String = ""
-    public var indent: UInt32 = 0
+    public var indent: Int16 = 0
     public var dateCreated: Date = Date()
 
     public var coders: [Coder<Self>] {[

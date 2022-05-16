@@ -39,7 +39,7 @@ public final class ZiplineClient: MintyRepo {
         Minty.connect(host: host, port: port)
     }
 
-    public func addComment(postId: String, content: String) throws -> Comment {
+    public func addComment(postId: UUID, content: String) throws -> Comment {
         try connect().request(event: .addComment, postId, content)
     }
 
@@ -57,85 +57,85 @@ public final class ZiplineClient: MintyRepo {
         try connect().request(event: .addObjectsUrl, url)
     }
 
-    public func addPost(parts: PostParts) throws -> String {
+    public func addPost(parts: PostParts) throws -> UUID {
         try connect().request(event: .addPost, parts)
     }
 
     public func addPostObjects(
-        postId: String,
-        objects: [String],
+        postId: UUID,
+        objects: [UUID],
         position: Int16
     ) throws -> Date {
         try connect().request(event: .addPostObjects, postId, objects, position)
     }
 
-    public func addPostTag(postId: String, tagId: String) throws {
+    public func addPostTag(postId: UUID, tagId: UUID) throws {
         try connect().send(event: .addPostTag, postId, tagId)
     }
 
-    public func addRelatedPost(postId: String, related: String) throws {
+    public func addRelatedPost(postId: UUID, related: UUID) throws {
         try connect().send(event: .addRelatedPost, postId, related)
     }
 
-    public func addReply(parentId: String, content: String) throws -> Comment {
+    public func addReply(parentId: UUID, content: String) throws -> Comment {
         try connect().request(event: .addReply, parentId, content)
     }
 
-    public func addTag(name: String) throws -> String {
+    public func addTag(name: String) throws -> UUID {
         try connect().request(event: .addTag, name)
     }
 
-    public func addTagAlias(tagId: String, alias: String) throws -> TagName {
+    public func addTagAlias(tagId: UUID, alias: String) throws -> TagName {
         try connect().request(event: .addTagAlias, tagId, alias)
     }
 
-    public func addTagSource(tagId: String, url: String) throws -> Source {
+    public func addTagSource(tagId: UUID, url: String) throws -> Source {
         try connect().request(event: .addTagSource, tagId, url)
     }
 
-    public func deletePost(postId: String) throws {
+    public func deletePost(postId: UUID) throws {
         try connect().send(event: .deletePost, postId)
     }
 
     public func deletePostObjects(
-        postId: String,
-        objects: [String]
+        postId: UUID,
+        objects: [UUID]
     ) throws -> Date {
         try connect().request(event: .deletePostObjects, postId, objects)
     }
 
     public func deletePostObjects(
-        postId: String,
+        postId: UUID,
         ranges: [Range<Int32>]
     ) throws -> Date {
         try connect().request(event: .deletePostObjectsRanges, postId, ranges)
     }
 
-    public func deletePostTag(postId: String, tagId: String) throws {
+    public func deletePostTag(postId: UUID, tagId: UUID) throws {
         try connect().send(event: .deletePostTag, postId, tagId)
     }
 
-    public func deleteRelatedPost(postId: String, related: String) throws {
+    public func deleteRelatedPost(postId: UUID, related: UUID) throws {
         try connect().send(event: .deleteRelatedPost, postId, related)
     }
 
-    public func deleteTag(tagId: String) throws {
+    public func deleteTag(tagId: UUID) throws {
         try connect().send(event: .deleteTag, tagId)
     }
 
-    public func deleteTagAlias(tagId: String, alias: String) throws -> TagName {
+    public func deleteTagAlias(tagId: UUID, alias: String) throws -> TagName {
         try connect().request(event: .deleteTagAlias, tagId, alias)
     }
 
-    public func deleteTagSource(tagId: String, sourceId: String) throws {
+    public func deleteTagSource(tagId: UUID, sourceId: String) throws {
         try connect().send(event: .deleteTagSource, tagId, sourceId)
     }
 
-    public func getComments(postId: String) throws -> [Comment] {
+    public func getComments(postId: UUID) throws -> [Comment] {
         try connect().request(event: .getComments, postId)
     }
 
-    public func getObject(objectId: String) throws -> Object {
+    public func getObject(objectId: UUID) throws -> Object {
         try connect().request(event: .getObject, objectId)
     }
 
@@ -150,7 +150,7 @@ public final class ZiplineClient: MintyRepo {
         )
     }
 
-    public func getPost(postId: String) throws -> Post {
+    public func getPost(postId: UUID) throws -> Post {
         try connect().request(event: .getPost, postId)
     }
 
@@ -162,7 +162,7 @@ public final class ZiplineClient: MintyRepo {
         return info
     }
 
-    public func getTag(tagId: String) throws -> Tag {
+    public func getTag(tagId: UUID) throws -> Tag {
         try connect().request(event: .getTag, tagId)
     }
 
@@ -171,7 +171,7 @@ public final class ZiplineClient: MintyRepo {
     }
 
     public func movePostObject(
-        postId: String,
+        postId: UUID,
         oldIndex: UInt32,
         newIndex: UInt32
     ) throws {
@@ -179,9 +179,9 @@ public final class ZiplineClient: MintyRepo {
     }
 
     public func movePostObjects(
-        postId: String,
-        objects: [String],
-        destination: String?
+        postId: UUID,
+        objects: [UUID],
+        destination: UUID?
     ) throws -> Date {
         try connect().request(
             event: .movePostObjects,
@@ -192,34 +192,34 @@ public final class ZiplineClient: MintyRepo {
     }
 
     public func setCommentContent(
-        commentId: String,
+        commentId: UUID,
         content: String
     ) throws -> String {
         try connect().request(event: .setCommentContent, commentId, content)
     }
 
     public func setPostDescription(
-        postId: String,
+        postId: UUID,
         description: String
     ) throws -> Modification<String?> {
         try connect().request(event: .setPostDescription, postId, description)
     }
 
     public func setPostTitle(
-        postId: String,
+        postId: UUID,
         title: String
     ) throws -> Modification<String?> {
         try connect().request(event: .setPostTitle, postId, title)
     }
 
     public func setTagDescription(
-        tagId: String,
+        tagId: UUID,
         description: String
     ) throws -> String? {
         try connect().request(event: .setTagDescription, tagId, description)
     }
 
-    public func setTagName(tagId: String, newName: String) throws -> TagName {
+    public func setTagName(tagId: UUID, newName: String) throws -> TagName {
         try connect().request(event: .setTagName, tagId, newName)
     }
 }

@@ -2,7 +2,7 @@ import Foundation
 import Zipline
 
 public struct Post: Codable, Hashable, Identifiable, ZiplineObject {
-    public var id: String = ""
+    public var id: UUID = .empty
     public var title: String?
     public var description: String?
     public var dateCreated: Date = Date()

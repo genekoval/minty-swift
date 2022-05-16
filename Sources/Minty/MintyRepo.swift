@@ -1,7 +1,7 @@
 import Foundation
 
 public protocol MintyRepo {
-    func addComment(postId: String, content: String) throws -> Comment
+    func addComment(postId: UUID, content: String) throws -> Comment
 
     func addObjectData(
         count: Int,
@@ -10,86 +10,86 @@ public protocol MintyRepo {
 
     func addObjectsUrl(url: String) throws -> [ObjectPreview]
 
-    func addPost(parts: PostParts) throws -> String
+    func addPost(parts: PostParts) throws -> UUID
 
     func addPostObjects(
-        postId: String,
-        objects: [String],
+        postId: UUID,
+        objects: [UUID],
         position: Int16
     ) throws -> Date
 
-    func addPostTag(postId: String, tagId: String) throws
+    func addPostTag(postId: UUID, tagId: UUID) throws
 
-    func addRelatedPost(postId: String, related: String) throws
+    func addRelatedPost(postId: UUID, related: UUID) throws
 
-    func addReply(parentId: String, content: String) throws -> Comment
+    func addReply(parentId: UUID, content: String) throws -> Comment
 
-    func addTag(name: String) throws -> String
+    func addTag(name: String) throws -> UUID
 
-    func addTagAlias(tagId: String, alias: String) throws -> TagName
+    func addTagAlias(tagId: UUID, alias: String) throws -> TagName
 
-    func addTagSource(tagId: String, url: String) throws -> Source
+    func addTagSource(tagId: UUID, url: String) throws -> Source
 
-    func deletePost(postId: String) throws
+    func deletePost(postId: UUID) throws
 
-    func deletePostObjects(postId: String, objects: [String]) throws -> Date
+    func deletePostObjects(postId: UUID, objects: [UUID]) throws -> Date
 
     func deletePostObjects(
-        postId: String,
+        postId: UUID,
         ranges: [Range<Int32>]
     ) throws -> Date
 
-    func deletePostTag(postId: String, tagId: String) throws
+    func deletePostTag(postId: UUID, tagId: UUID) throws
 
-    func deleteRelatedPost(postId: String, related: String) throws
+    func deleteRelatedPost(postId: UUID, related: UUID) throws
 
-    func deleteTag(tagId: String) throws
+    func deleteTag(tagId: UUID) throws
 
-    func deleteTagAlias(tagId: String, alias: String) throws -> TagName
+    func deleteTagAlias(tagId: UUID, alias: String) throws -> TagName
 
-    func deleteTagSource(tagId: String, sourceId: String) throws
+    func deleteTagSource(tagId: UUID, sourceId: String) throws
 
-    func getComments(postId: String) throws -> [Comment]
+    func getComments(postId: UUID) throws -> [Comment]
 
-    func getObject(objectId: String) throws -> Object
+    func getObject(objectId: UUID) throws -> Object
 
     func getObjectData(objectId: UUID, handler: (Data) throws -> Void) throws
 
-    func getPost(postId: String) throws -> Post
+    func getPost(postId: UUID) throws -> Post
 
     func getPosts(query: PostQuery) throws -> SearchResult<PostPreview>
 
     func getServerInfo() throws -> ServerInfo
 
-    func getTag(tagId: String) throws -> Tag
+    func getTag(tagId: UUID) throws -> Tag
 
     func getTags(query: TagQuery) throws -> SearchResult<TagPreview>
 
     func movePostObject(
-        postId: String,
+        postId: UUID,
         oldIndex: UInt32,
         newIndex: UInt32
     ) throws
 
     func movePostObjects(
-        postId: String,
-        objects: [String],
-        destination: String?
+        postId: UUID,
+        objects: [UUID],
+        destination: UUID?
     ) throws -> Date
 
-    func setCommentContent(commentId: String, content: String) throws -> String
+    func setCommentContent(commentId: UUID, content: String) throws -> String
 
     func setPostDescription(
-        postId: String,
+        postId: UUID,
         description: String
     ) throws -> Modification<String?>
 
     func setPostTitle(
-        postId: String,
+        postId: UUID,
         title: String
     ) throws -> Modification<String?>
 
-    func setTagDescription(tagId: String, description: String) throws -> String?
+    func setTagDescription(tagId: UUID, description: String) throws -> String?
 
-    func setTagName(tagId: String, newName: String) throws -> TagName
+    func setTagName(tagId: UUID, newName: String) throws -> TagName
 }

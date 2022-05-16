@@ -1,3 +1,4 @@
+import Foundation
 import Zipline
 
 public struct PostQuery: ZiplineObject {
@@ -31,7 +32,7 @@ public struct PostQuery: ZiplineObject {
     public var from: UInt32 = 0
     public var size: UInt32 = 0
     public var text: String?
-    public var tags: [String] = []
+    public var tags: [UUID] = []
     public var sort: Sort = Sort()
 
     public var coders: [Coder<Self>] {[

@@ -1,7 +1,8 @@
+import Foundation
 import Zipline
 
 public struct ObjectSource: Codable, Hashable, ZiplineObject {
-    public var bucketId: String = ""
+    public var bucketId: UUID = .empty
     public var host: String?
     public var port: UInt16 = 0
 

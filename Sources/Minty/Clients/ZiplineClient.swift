@@ -131,6 +131,10 @@ public final class ZiplineClient: MintyRepo {
         try connect().send(event: .deleteTagSource, tagId, sourceId)
     }
 
+    public func getComment(commentId: UUID) throws -> CommentDetail {
+        try connect().request(event: .getComment, commentId)
+    }
+
     public func getComments(postId: UUID) throws -> [Comment] {
         try connect().request(event: .getComments, postId)
     }

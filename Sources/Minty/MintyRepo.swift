@@ -49,6 +49,8 @@ public protocol MintyRepo {
 
     func deleteTagSource(tagId: UUID, sourceId: String) throws
 
+    func getComment(commentId: UUID) throws -> CommentDetail
+
     func getComments(postId: UUID) throws -> [Comment]
 
     func getObject(objectId: UUID) throws -> Object

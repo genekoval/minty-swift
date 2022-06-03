@@ -37,7 +37,7 @@ enum MintyEvent: UInt32, ZiplineEncodable {
     case setTagDescription
     case setTagName
 
-    public func encode(to encoder: ZiplineEncoder) {
-        rawValue.encode(to: encoder)
+    public func encode(to encoder: ZiplineEncoder) async throws {
+        try await rawValue.encode(to: encoder)
     }
 }

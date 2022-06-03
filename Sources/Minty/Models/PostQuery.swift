@@ -4,44 +4,54 @@ import Zipline
 public struct PostQuery: ZiplineObject {
     public struct Sort: ZiplineObject {
         public enum SortValue: UInt8, ZiplineCodable {
+            public static func decode(
+                from decoder: ZiplineDecoder
+            ) async throws -> PostQuery.Sort.SortValue {
+                let value = try await UInt8.decode(from: decoder)
+
+                guard let result = SortValue(rawValue: value) else {
+                    throw MintyError.unspecified(
+                        message: "unknown post sort value: \(value)"
+                    )
+                }
+
+                return result
+            }
+
             case dateCreated
             case dateModified
             case relevance
             case title
 
-            public init(from decoder: ZiplineDecoder) throws {
-                self.init(rawValue: try UInt8(from: decoder))!
-            }
-
-            public func encode(to encoder: ZiplineEncoder) {
-                rawValue.encode(to: encoder)
+            public func encode(to encoder: ZiplineEncoder) async throws {
+                try await rawValue.encode(to: encoder)
             }
         }
 
-        public var order: SortOrder = .ascending
-        public var value: SortValue = .dateCreated
-
-        public var coders: [Coder<Self>] {[
+        public static var coders: [Coder<Self>] {[
             Coder(\Self.order),
             Coder(\Self.value)
         ]}
 
+        public var order: SortOrder = .ascending
+        public var value: SortValue = .dateCreated
+
         public init() { }
     }
 
-    public var from: UInt32 = 0
-    public var size: UInt32 = 0
-    public var text: String?
-    public var tags: [UUID] = []
-    public var sort: Sort = Sort()
-
-    public var coders: [Coder<Self>] {[
+    public static var coders: [Coder<Self>] {[
         Coder(\Self.from),
         Coder(\Self.size),
         Coder(\Self.text),
         Coder(\Self.tags),
         Coder(\Self.sort)
     ]}
+
+    public var from: UInt32 = 0
+    public var size: UInt32 = 0
+    public var text: String?
+    public var tags: [UUID] = []
+    public var sort: Sort = Sort()
 
     public init() { }
 }

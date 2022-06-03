@@ -2,17 +2,7 @@ import Foundation
 import Zipline
 
 public struct Object: Codable, Hashable, Identifiable, ZiplineObject {
-    public var id: UUID = .empty
-    public var hash: String = ""
-    public var size: DataSize = DataSize()
-    public var type: String = ""
-    public var subtype: String = ""
-    public var dateAdded: Date = Date()
-    public var previewId: UUID?
-    public var source: Source?
-    public var posts: [PostPreview] = []
-
-    public var coders: [Coder<Self>] {[
+    public static var coders: [Coder<Self>] {[
         Coder(\Self.id),
         Coder(\Self.hash),
         Coder(\Self.size),
@@ -23,6 +13,16 @@ public struct Object: Codable, Hashable, Identifiable, ZiplineObject {
         Coder(\Self.source),
         Coder(\Self.posts)
     ]}
+
+    public var id: UUID = .empty
+    public var hash: String = ""
+    public var size: DataSize = DataSize()
+    public var type: String = ""
+    public var subtype: String = ""
+    public var dateAdded: Date = Date()
+    public var previewId: UUID?
+    public var source: Source?
+    public var posts: [PostPreview] = []
 
     public init() { }
 }

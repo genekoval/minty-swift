@@ -1,14 +1,17 @@
 import Zipline
 
 public enum MintyError: ZiplineError {
-    case unspecified(message: String)
-
-    public init(code: StatusType, decoder: ZiplineDecoder) throws {
+    public static func decode(
+        from decoder: ZiplineDecoder,
+        code: StatusType
+    ) async throws -> MintyError {
         switch code {
         case 0:
-            self = .unspecified(message: try String(from: decoder))
+            return .unspecified(message: try await String.decode(from: decoder))
         default:
-            self = .unspecified(message: "Unknown error code: \(code)")
+            return .unspecified(message: "unknown error code: \(code)")
         }
     }
+
+    case unspecified(message: String)
 }

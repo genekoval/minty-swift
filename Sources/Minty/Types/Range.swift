@@ -1,15 +1,17 @@
 import Zipline
 
 extension Range: ZiplineCodable where Bound: ZiplineCodable {
-    public init(from decoder: ZiplineDecoder) throws {
-        let lower = try Bound(from: decoder)
-        let upper = try Bound(from: decoder)
+    public static func decode(
+        from decoder: ZiplineDecoder
+    ) async throws -> Range<Bound> {
+        let lower = try await Bound.decode(from: decoder)
+        let upper = try await Bound.decode(from: decoder)
 
-        self = lower..<upper
+        return lower..<upper
     }
 
-    public func encode(to encoder: ZiplineEncoder) {
-        self.lowerBound.encode(to: encoder)
-        self.upperBound.encode(to: encoder)
+    public func encode(to encoder: ZiplineEncoder) async throws {
+        try await self.lowerBound.encode(to: encoder)
+        try await self.upperBound.encode(to: encoder)
     }
 }

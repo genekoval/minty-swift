@@ -14,8 +14,10 @@ private let dateFormatter: ISO8601DateFormatter = {
 }()
 
 extension Date: ZiplineCodable {
-    public init(from decoder: ZiplineDecoder) throws {
-        let string = try String(from: decoder)
+    public static func decode(
+        from decoder: ZiplineDecoder
+    ) async throws -> Date {
+        let string = try await String.decode(from: decoder)
 
         guard let date = dateFormatter.date(from: string) else {
             throw ZiplineCoderError.badConversion(
@@ -23,10 +25,10 @@ extension Date: ZiplineCodable {
             )
         }
 
-        self = date
+        return date
     }
 
-    public func encode(to encoder: ZiplineEncoder) {
-        dateFormatter.string(from: self).encode(to: encoder)
+    public func encode(to encoder: ZiplineEncoder) async throws {
+        try await dateFormatter.string(from: self).encode(to: encoder)
     }
 }

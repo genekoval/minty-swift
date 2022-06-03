@@ -15,179 +15,216 @@ private func connect(host: String, port: UInt16) -> Client {
 }
 
 public final class ZiplineClient: MintyRepo {
-    public let host: String
-    private let info: ServerInfo
-    private let objectStore: ObjectStore
-    public let port: UInt16
-
-    public var serverVersion: String { info.version }
-
-    public init(host: String, port: UInt16) throws {
-        self.host = host
-        self.port = port
-
-        info = try Minty.connect(host: host, port: port)
+    public static func create(
+        host: String,
+        port: UInt16
+    ) async throws -> (ZiplineClient, ServerMetadata) {
+        let connection = Minty.connect(host: host, port: port)
+        let info: ServerInfo = try await connection
             .request(event: .getServerInfo)
-
-        objectStore = Fstore.ZiplineClient(
+        let store = Fstore.ZiplineClient(
             host: info.objectSource.host ?? host,
             port: info.objectSource.port
         )
+
+        let client = ZiplineClient(
+            host: host,
+            port: port,
+            bucketId: info.objectSource.bucketId,
+            objectStore: store
+        )
+
+        return (client, info.metadata)
+    }
+
+    public let host: String
+    public let port: UInt16
+
+    private let bucketId: UUID
+    private let objectStore: ObjectStore
+
+    private init(
+        host: String,
+        port: UInt16,
+        bucketId: UUID,
+        objectStore: ObjectStore
+    ) {
+        self.host = host
+        self.port = port
+        self.bucketId = bucketId
+        self.objectStore = objectStore
     }
 
     private func connect() -> Client {
         Minty.connect(host: host, port: port)
     }
 
-    public func addComment(postId: UUID, content: String) throws -> Comment {
-        try connect().request(event: .addComment, postId, content)
+    public func addComment(
+        postId: UUID,
+        content: String
+    ) async throws -> Comment {
+        try await connect().request(event: .addComment, postId, content)
     }
 
     public func addObjectData(
-        count: Int,
-        data: @escaping (DataWriter) -> Void
-    ) throws -> ObjectPreview {
-        try connect().request(
-            event: .addObjectData,
-            ObjectPart(count: count, src: data)
-        )
+        size: Int,
+        writer: @escaping (DataWriter) async throws -> Void
+    ) async throws -> ObjectPreview {
+        let upload = ObjectUpload(size: size, writer: writer)
+        return try await connect().request(event: .addObjectData, upload)
     }
 
-    public func addObjectsUrl(url: String) throws -> [ObjectPreview] {
-        try connect().request(event: .addObjectsUrl, url)
+    public func addObjectsUrl(url: String) async throws -> [ObjectPreview] {
+        try await connect().request(event: .addObjectsUrl, url)
     }
 
-    public func addPost(parts: PostParts) throws -> UUID {
-        try connect().request(event: .addPost, parts)
+    public func addPost(parts: PostParts) async throws -> UUID {
+        try await connect().request(event: .addPost, parts)
     }
 
     public func addPostObjects(
         postId: UUID,
         objects: [UUID],
         position: Int16
-    ) throws -> Date {
-        try connect().request(event: .addPostObjects, postId, objects, position)
+    ) async throws -> Date {
+        try await connect()
+            .request(event: .addPostObjects, postId, objects, position)
     }
 
-    public func addPostTag(postId: UUID, tagId: UUID) throws {
-        try connect().send(event: .addPostTag, postId, tagId)
+    public func addPostTag(postId: UUID, tagId: UUID) async throws {
+        try await connect().send(event: .addPostTag, postId, tagId)
     }
 
-    public func addRelatedPost(postId: UUID, related: UUID) throws {
-        try connect().send(event: .addRelatedPost, postId, related)
+    public func addRelatedPost(postId: UUID, related: UUID) async throws {
+        try await connect().send(event: .addRelatedPost, postId, related)
     }
 
-    public func addReply(parentId: UUID, content: String) throws -> Comment {
-        try connect().request(event: .addReply, parentId, content)
+    public func addReply(
+        parentId: UUID,
+        content: String
+    ) async throws -> Comment {
+        try await connect().request(event: .addReply, parentId, content)
     }
 
-    public func addTag(name: String) throws -> UUID {
-        try connect().request(event: .addTag, name)
+    public func addTag(name: String) async throws -> UUID {
+        try await connect().request(event: .addTag, name)
     }
 
-    public func addTagAlias(tagId: UUID, alias: String) throws -> TagName {
-        try connect().request(event: .addTagAlias, tagId, alias)
+    public func addTagAlias(
+        tagId: UUID,
+        alias: String
+    ) async throws -> TagName {
+        try await connect().request(event: .addTagAlias, tagId, alias)
     }
 
-    public func addTagSource(tagId: UUID, url: String) throws -> Source {
-        try connect().request(event: .addTagSource, tagId, url)
+    public func addTagSource(tagId: UUID, url: String) async throws -> Source {
+        try await connect().request(event: .addTagSource, tagId, url)
     }
 
-    public func deletePost(postId: UUID) throws {
-        try connect().send(event: .deletePost, postId)
+    public func deletePost(postId: UUID) async throws {
+        try await connect().send(event: .deletePost, postId)
     }
 
     public func deletePostObjects(
         postId: UUID,
         objects: [UUID]
-    ) throws -> Date {
-        try connect().request(event: .deletePostObjects, postId, objects)
+    ) async throws -> Date {
+        try await connect().request(event: .deletePostObjects, postId, objects)
     }
 
     public func deletePostObjects(
         postId: UUID,
         ranges: [Range<Int32>]
-    ) throws -> Date {
-        try connect().request(event: .deletePostObjectsRanges, postId, ranges)
+    ) async throws -> Date {
+        try await connect()
+            .request(event: .deletePostObjectsRanges, postId, ranges)
     }
 
-    public func deletePostTag(postId: UUID, tagId: UUID) throws {
-        try connect().send(event: .deletePostTag, postId, tagId)
+    public func deletePostTag(postId: UUID, tagId: UUID) async throws {
+        try await connect().send(event: .deletePostTag, postId, tagId)
     }
 
-    public func deleteRelatedPost(postId: UUID, related: UUID) throws {
-        try connect().send(event: .deleteRelatedPost, postId, related)
+    public func deleteRelatedPost(postId: UUID, related: UUID) async throws {
+        try await connect().send(event: .deleteRelatedPost, postId, related)
     }
 
-    public func deleteTag(tagId: UUID) throws {
-        try connect().send(event: .deleteTag, tagId)
+    public func deleteTag(tagId: UUID) async throws {
+        try await connect().send(event: .deleteTag, tagId)
     }
 
-    public func deleteTagAlias(tagId: UUID, alias: String) throws -> TagName {
-        try connect().request(event: .deleteTagAlias, tagId, alias)
+    public func deleteTagAlias(
+        tagId: UUID,
+        alias: String
+    ) async throws -> TagName {
+        try await connect().request(event: .deleteTagAlias, tagId, alias)
     }
 
-    public func deleteTagSource(tagId: UUID, sourceId: String) throws {
-        try connect().send(event: .deleteTagSource, tagId, sourceId)
+    public func deleteTagSource(tagId: UUID, sourceId: String) async throws {
+        try await connect().send(event: .deleteTagSource, tagId, sourceId)
     }
 
-    public func getComment(commentId: UUID) throws -> CommentDetail {
-        try connect().request(event: .getComment, commentId)
+    public func getComment(commentId: UUID) async throws -> CommentDetail {
+        try await connect().request(event: .getComment, commentId)
     }
 
-    public func getComments(postId: UUID) throws -> [Comment] {
-        try connect().request(event: .getComments, postId)
+    public func getComments(postId: UUID) async throws -> [Comment] {
+        try await connect().request(event: .getComments, postId)
     }
 
-    public func getObject(objectId: UUID) throws -> Object {
-        try connect().request(event: .getObject, objectId)
+    public func getObject(objectId: UUID) async throws -> Object {
+        try await connect().request(event: .getObject, objectId)
     }
 
     public func getObjectData(
         objectId: UUID,
-        handler: (Data) throws -> Void
-    ) throws {
-        try objectStore.getObject(
-            bucketId: info.objectSource.bucketId,
+        handler: (Data) async throws -> Void
+    ) async throws {
+        try await objectStore.getObject(
+            bucketId: bucketId,
             objectId: objectId,
             handler: handler
         )
     }
 
-    public func getPost(postId: UUID) throws -> Post {
-        try connect().request(event: .getPost, postId)
+    public func getPost(postId: UUID) async throws -> Post {
+        try await connect().request(event: .getPost, postId)
     }
 
-    public func getPosts(query: PostQuery) throws -> SearchResult<PostPreview> {
-        try connect().request(event: .getPosts, query)
+    public func getPosts(
+        query: PostQuery
+    ) async throws -> SearchResult<PostPreview> {
+        try await connect().request(event: .getPosts, query)
     }
 
-    public func getServerInfo() throws -> ServerInfo {
-        return info
+    public func getServerInfo() async throws -> ServerInfo {
+        try await connect().request(event: .getServerInfo)
     }
 
-    public func getTag(tagId: UUID) throws -> Tag {
-        try connect().request(event: .getTag, tagId)
+    public func getTag(tagId: UUID) async throws -> Tag {
+        try await connect().request(event: .getTag, tagId)
     }
 
-    public func getTags(query: TagQuery) throws -> SearchResult<TagPreview> {
-        try connect().request(event: .getTags, query)
+    public func getTags(
+        query: TagQuery
+    ) async throws -> SearchResult<TagPreview> {
+        try await connect().request(event: .getTags, query)
     }
 
     public func movePostObject(
         postId: UUID,
         oldIndex: UInt32,
         newIndex: UInt32
-    ) throws {
-        try connect().send(event: .movePostObject, postId, oldIndex, newIndex)
+    ) async throws {
+        try await connect()
+            .send(event: .movePostObject, postId, oldIndex, newIndex)
     }
 
     public func movePostObjects(
         postId: UUID,
         objects: [UUID],
         destination: UUID?
-    ) throws -> Date {
-        try connect().request(
+    ) async throws -> Date {
+        try await connect().request(
             event: .movePostObjects,
             postId,
             objects,
@@ -198,32 +235,38 @@ public final class ZiplineClient: MintyRepo {
     public func setCommentContent(
         commentId: UUID,
         content: String
-    ) throws -> String {
-        try connect().request(event: .setCommentContent, commentId, content)
+    ) async throws -> String {
+        try await connect()
+            .request(event: .setCommentContent, commentId, content)
     }
 
     public func setPostDescription(
         postId: UUID,
         description: String
-    ) throws -> Modification<String?> {
-        try connect().request(event: .setPostDescription, postId, description)
+    ) async throws -> Modification<String?> {
+        try await connect()
+            .request(event: .setPostDescription, postId, description)
     }
 
     public func setPostTitle(
         postId: UUID,
         title: String
-    ) throws -> Modification<String?> {
-        try connect().request(event: .setPostTitle, postId, title)
+    ) async throws -> Modification<String?> {
+        try await connect().request(event: .setPostTitle, postId, title)
     }
 
     public func setTagDescription(
         tagId: UUID,
         description: String
-    ) throws -> String? {
-        try connect().request(event: .setTagDescription, tagId, description)
+    ) async throws -> String? {
+        try await connect()
+            .request(event: .setTagDescription, tagId, description)
     }
 
-    public func setTagName(tagId: UUID, newName: String) throws -> TagName {
-        try connect().request(event: .setTagName, tagId, newName)
+    public func setTagName(
+        tagId: UUID,
+        newName: String
+    ) async throws -> TagName {
+        try await connect().request(event: .setTagName, tagId, newName)
     }
 }

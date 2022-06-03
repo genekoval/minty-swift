@@ -2,10 +2,12 @@ import XCTest
 @testable import Minty
 
 final class MintyTests: XCTestCase {
-    func testConnection() throws {
-        let repo: MintyRepo = try ZiplineClient(host: "nova.aur", port: 5077)
-        let info = try repo.getServerInfo()
+    func testConnection() async throws {
+        let (_, metadata) = try await ZiplineClient.create(
+            host: "nova.aur",
+            port: 5077
+        )
 
-        XCTAssertFalse(info.version.isEmpty)
+        XCTAssertFalse(metadata.version.isEmpty)
     }
 }

@@ -44,6 +44,7 @@ public struct PostQuery: ZiplineObject {
         Coder(\Self.size),
         Coder(\Self.text),
         Coder(\Self.tags),
+        Coder(\Self.visibility),
         Coder(\Self.sort)
     ]}
 
@@ -51,6 +52,7 @@ public struct PostQuery: ZiplineObject {
     public var size: UInt32 = 0
     public var text: String?
     public var tags: [UUID] = []
+    public var visibility: Visibility = .pub
     public var sort: Sort = Sort()
 
     public init() { }

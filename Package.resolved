@@ -6,7 +6,7 @@
         "repositoryURL": "https://git.aurora.aur/genya/fstore-swift.git",
         "state": {
           "branch": "main",
-          "revision": "07b72a0b403474ef9b0846bf9a287bdbc9b6d95c",
+          "revision": "0fab5c32ec6343a1476dd8c67266571afc14b23d",
           "version": null
         }
       },
@@ -15,7 +15,7 @@
         "repositoryURL": "https://git.aurora.aur/genya/zipline-swift.git",
         "state": {
           "branch": "main",
-          "revision": "7d83b0de569b329b3d00c614edec7e699d429d49",
+          "revision": "25f8bce8649d96ffe6499b854f1fb1ae789b26bf",
           "version": null
         }
       }

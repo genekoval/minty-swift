@@ -8,7 +8,7 @@ public struct Source: Codable, Hashable, Identifiable, ZiplineObject {
         Coder(\Self.icon)
     ]}
 
-    public var id: String = ""
+    public var id: Int64 = -1
     public var url: String = ""
     public var icon: UUID?
 

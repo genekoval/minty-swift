@@ -6,8 +6,8 @@ private typealias Client = Zipline.ZiplineClient<MintyEvent, MintyError>
 
 private let bufferSize = 8192
 
-private func connect(host: String, port: UInt16) -> Client {
-    Zipline.ZiplineClient(coder: ZiplineConnection(
+private func connect(host: String, port: UInt16) async throws -> Client {
+    Zipline.ZiplineClient(coder: try await ZiplineConnection(
         host: host,
         port: port,
         bufferSize: bufferSize
@@ -15,48 +15,29 @@ private func connect(host: String, port: UInt16) -> Client {
 }
 
 public final class ZiplineClient: MintyRepo {
-    public static func create(
-        host: String,
-        port: UInt16
-    ) async throws -> (ZiplineClient, ServerMetadata) {
-        let connection = Minty.connect(host: host, port: port)
-        let info: ServerInfo = try await connection
-            .request(event: .getServerInfo)
-        let store = Fstore.ZiplineClient(
-            host: info.objectSource.host ?? host,
-            port: info.objectSource.port
-        )
-
-        let client = ZiplineClient(
-            host: host,
-            port: port,
-            bucketId: info.objectSource.bucketId,
-            objectStore: store
-        )
-
-        return (client, info.metadata)
-    }
-
     public let host: String
     public let port: UInt16
 
-    private let bucketId: UUID
+    private let serverInfo: ServerInfo
     private let objectStore: ObjectStore
 
-    private init(
-        host: String,
-        port: UInt16,
-        bucketId: UUID,
-        objectStore: ObjectStore
-    ) {
+    public var metadata: ServerMetadata { serverInfo.metadata }
+
+    public init(host: String, port: UInt16) async throws {
         self.host = host
         self.port = port
-        self.bucketId = bucketId
-        self.objectStore = objectStore
+
+        let client = try await Minty.connect(host: host, port: port)
+        serverInfo = try await client.request(event: .getServerInfo)
+
+        objectStore = Fstore.ZiplineClient(
+            host: serverInfo.objectSource.host ?? host,
+            port: serverInfo.objectSource.port
+        )
     }
 
-    private func connect() -> Client {
-        Minty.connect(host: host, port: port)
+    private func connect() async throws -> Client {
+        try await Minty.connect(host: host, port: port)
     }
 
     public func addComment(
@@ -78,17 +59,13 @@ public final class ZiplineClient: MintyRepo {
         try await connect().request(event: .addObjectsUrl, url)
     }
 
-    public func addPost(parts: PostParts) async throws -> UUID {
-        try await connect().request(event: .addPost, parts)
-    }
-
     public func addPostObjects(
         postId: UUID,
         objects: [UUID],
-        position: Int16
+        destination: UUID?
     ) async throws -> Date {
         try await connect()
-            .request(event: .addPostObjects, postId, objects, position)
+            .request(event: .addPostObjects, postId, objects, destination)
     }
 
     public func addPostTag(postId: UUID, tagId: UUID) async throws {
@@ -121,6 +98,14 @@ public final class ZiplineClient: MintyRepo {
         try await connect().request(event: .addTagSource, tagId, url)
     }
 
+    public func createPost(postId: UUID) async throws {
+        try await connect().send(event: .createPost, postId)
+    }
+
+    public func createPostDraft() async throws -> UUID {
+        try await connect().request(event: .createPostDraft)
+    }
+
     public func deletePost(postId: UUID) async throws {
         try await connect().send(event: .deletePost, postId)
     }
@@ -130,14 +115,6 @@ public final class ZiplineClient: MintyRepo {
         objects: [UUID]
     ) async throws -> Date {
         try await connect().request(event: .deletePostObjects, postId, objects)
-    }
-
-    public func deletePostObjects(
-        postId: UUID,
-        ranges: [Range<Int32>]
-    ) async throws -> Date {
-        try await connect()
-            .request(event: .deletePostObjectsRanges, postId, ranges)
     }
 
     public func deletePostTag(postId: UUID, tagId: UUID) async throws {
@@ -159,7 +136,7 @@ public final class ZiplineClient: MintyRepo {
         try await connect().request(event: .deleteTagAlias, tagId, alias)
     }
 
-    public func deleteTagSource(tagId: UUID, sourceId: String) async throws {
+    public func deleteTagSource(tagId: UUID, sourceId: Int64) async throws {
         try await connect().send(event: .deleteTagSource, tagId, sourceId)
     }
 
@@ -180,7 +157,7 @@ public final class ZiplineClient: MintyRepo {
         handler: (Data) async throws -> Void
     ) async throws {
         try await objectStore.getObject(
-            bucketId: bucketId,
+            bucketId: serverInfo.objectSource.bucketId,
             objectId: objectId,
             handler: handler
         )
@@ -208,15 +185,6 @@ public final class ZiplineClient: MintyRepo {
         query: TagQuery
     ) async throws -> SearchResult<TagPreview> {
         try await connect().request(event: .getTags, query)
-    }
-
-    public func movePostObject(
-        postId: UUID,
-        oldIndex: UInt32,
-        newIndex: UInt32
-    ) async throws {
-        try await connect()
-            .send(event: .movePostObject, postId, oldIndex, newIndex)
     }
 
     public func movePostObjects(

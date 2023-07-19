@@ -6,6 +6,7 @@ public struct Post: Codable, Hashable, Identifiable, ZiplineObject {
         Coder(\Self.id),
         Coder(\Self.title),
         Coder(\Self.description),
+        Coder(\Self.visibility),
         Coder(\Self.dateCreated),
         Coder(\Self.dateModified),
         Coder(\Self.objects),
@@ -16,6 +17,7 @@ public struct Post: Codable, Hashable, Identifiable, ZiplineObject {
     public var id: UUID = .empty
     public var title: String?
     public var description: String?
+    public var visibility: Visibility = .invalid
     public var dateCreated: Date = Date()
     public var dateModified: Date = Date()
     public var objects: [ObjectPreview] = []

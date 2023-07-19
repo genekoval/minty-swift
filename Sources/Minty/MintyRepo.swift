@@ -1,4 +1,5 @@
 import Foundation
+import Zipline
 
 public protocol MintyRepo {
     func addComment(postId: UUID, content: String) async throws -> Comment
@@ -10,12 +11,10 @@ public protocol MintyRepo {
 
     func addObjectsUrl(url: String) async throws -> [ObjectPreview]
 
-    func addPost(parts: PostParts) async throws -> UUID
-
     func addPostObjects(
         postId: UUID,
         objects: [UUID],
-        position: Int16
+        destination: UUID?
     ) async throws -> Date
 
     func addPostTag(postId: UUID, tagId: UUID) async throws
@@ -30,14 +29,13 @@ public protocol MintyRepo {
 
     func addTagSource(tagId: UUID, url: String) async throws -> Source
 
+    func createPost(postId: UUID) async throws
+
+    func createPostDraft() async throws -> UUID
+
     func deletePost(postId: UUID) async throws
 
     func deletePostObjects(postId: UUID, objects: [UUID]) async throws -> Date
-
-    func deletePostObjects(
-        postId: UUID,
-        ranges: [Range<Int32>]
-    ) async throws -> Date
 
     func deletePostTag(postId: UUID, tagId: UUID) async throws
 
@@ -47,7 +45,7 @@ public protocol MintyRepo {
 
     func deleteTagAlias(tagId: UUID, alias: String) async throws -> TagName
 
-    func deleteTagSource(tagId: UUID, sourceId: String) async throws
+    func deleteTagSource(tagId: UUID, sourceId: Int64) async throws
 
     func getComment(commentId: UUID) async throws -> CommentDetail
 
@@ -69,12 +67,6 @@ public protocol MintyRepo {
     func getTag(tagId: UUID) async throws -> Tag
 
     func getTags(query: TagQuery) async throws -> SearchResult<TagPreview>
-
-    func movePostObject(
-        postId: UUID,
-        oldIndex: UInt32,
-        newIndex: UInt32
-    ) async throws
 
     func movePostObjects(
         postId: UUID,

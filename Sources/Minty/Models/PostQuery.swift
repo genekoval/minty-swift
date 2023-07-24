@@ -1,59 +1,60 @@
 import Foundation
-import Zipline
 
-public struct PostQuery: ZiplineObject {
-    public struct Sort: ZiplineObject {
-        public enum SortValue: UInt8, ZiplineCodable {
-            public static func decode(
-                from decoder: ZiplineDecoder
-            ) async throws -> PostQuery.Sort.SortValue {
-                let value = try await UInt8.decode(from: decoder)
-
-                guard let result = SortValue(rawValue: value) else {
-                    throw MintyError.unspecified(
-                        message: "unknown post sort value: \(value)"
-                    )
-                }
-
-                return result
-            }
-
-            case dateCreated
-            case dateModified
-            case relevance
-            case title
-
-            public func encode(to encoder: ZiplineEncoder) async throws {
-                try await rawValue.encode(to: encoder)
-            }
+public struct PostQuery {
+    public struct Sort {
+        public enum SortValue: String {
+            case dateCreated = "created"
+            case dateModified = "modified"
+            case relevance = "relevance"
+            case title = "title"
         }
 
-        public static var coders: [Coder<Self>] {[
-            Coder(\Self.order),
-            Coder(\Self.value)
-        ]}
+        public static let created = Sort(
+            order: .descending,
+            value: .dateCreated
+        )
+        public static let modified = Sort(
+            order: .descending,
+            value: .dateModified
+        )
+        public static let relevance = Sort(
+            order: .descending,
+            value: .relevance
+        )
+        public static let title = Sort(
+            order: .ascending,
+            value: .title
+        )
 
-        public var order: SortOrder = .ascending
-        public var value: SortValue = .dateCreated
+        public var order: SortOrder
+        public var value: SortValue
 
-        public init() { }
+        public init(order: SortOrder, value: SortValue) {
+            self.order = order
+            self.value = value
+        }
     }
 
-    public static var coders: [Coder<Self>] {[
-        Coder(\Self.from),
-        Coder(\Self.size),
-        Coder(\Self.text),
-        Coder(\Self.tags),
-        Coder(\Self.visibility),
-        Coder(\Self.sort)
-    ]}
-
-    public var from: UInt32 = 0
-    public var size: UInt32 = 0
+    public var from: Int
+    public var size: Int
     public var text: String?
-    public var tags: [UUID] = []
-    public var visibility: Visibility = .pub
-    public var sort: Sort = Sort()
+    public var tags: [UUID]
+    public var visibility: Visibility
+    public var sort: Sort
 
-    public init() { }
+    public init(
+        from: Int = 0,
+        size: Int,
+        text: String? = nil,
+        tags: [UUID] = [],
+        visibility: Visibility = .pub,
+        sort: Sort = .created
+    ) {
+        self.from = from
+        self.size = size
+        self.text = text
+        self.tags = tags
+        self.visibility = visibility
+        self.sort = sort
+    }
 }

@@ -1,21 +1,15 @@
-import Zipline
-
-public enum Visibility: Int32, Codable, ZiplineCodable {
-    public static func decode(
-        from decoder: ZiplineDecoder
-    ) async throws -> Visibility {
-        let value = try await Int32.decode(from: decoder)
-
-        guard let result = Visibility(rawValue: value) else {
-            return .invalid
-        }
-
-        return result
-    }
-
+public enum Visibility: Int32, Codable, CustomStringConvertible {
     case invalid = -1
     case draft
     case pub
+
+    public var description: String {
+        switch self {
+        case .invalid: return "invalid"
+        case .draft: return "draft"
+        case .pub: return "public"
+        }
+    }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
@@ -45,9 +39,5 @@ public enum Visibility: Int32, Codable, ZiplineCodable {
         }
 
         try container.encode(value)
-    }
-
-    public func encode(to encoder: ZiplineEncoder) async throws {
-        try await rawValue.encode(to: encoder)
     }
 }

@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.8
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -6,8 +6,8 @@ import PackageDescription
 let package = Package(
     name: "Minty",
     platforms: [
-        .iOS(.v14),
-        .macOS(.v11)
+        .iOS(.v16),
+        .macOS(.v13)
     ],
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
@@ -21,11 +21,7 @@ let package = Package(
         // .package(url: /* package url */, from: "1.0.0"),
         .package(
             url: "https://git.aurora.aur/genya/fstore-swift.git",
-            .branch("main")
-        ),
-        .package(
-            url: "https://git.aurora.aur/genya/zipline-swift.git",
-            .branch("main")
+            branch: "main"
         )
     ],
     targets: [
@@ -34,8 +30,7 @@ let package = Package(
         .target(
             name: "Minty",
             dependencies: [
-                .product(name: "Fstore", package: "fstore-swift"),
-                .product(name: "Zipline", package: "zipline-swift")
+                .product(name: "Fstore", package: "fstore-swift")
             ]
         ),
         .testTarget(

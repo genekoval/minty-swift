@@ -1,98 +1,82 @@
 import Foundation
-import Zipline
 
 public protocol MintyRepo {
-    func addComment(postId: UUID, content: String) async throws -> Comment
+    var version: String { get }
 
-    func addObjectData(
-        size: Int,
-        writer: @escaping (DataWriter) async throws -> Void
-    ) async throws -> ObjectPreview
+    func addComment(post: UUID, content: String) async throws -> Comment
 
-    func addObjectsUrl(url: String) async throws -> [ObjectPreview]
+    func addObject(file: URL) async throws -> ObjectPreview
 
-    func addPostObjects(
-        postId: UUID,
-        objects: [UUID],
-        destination: UUID?
-    ) async throws -> Date
+    func addObjects(url: String) async throws -> [ObjectPreview]
 
-    func addPostTag(postId: UUID, tagId: UUID) async throws
+    func add(post: UUID, objects: [UUID]) async throws -> Date
 
-    func addRelatedPost(postId: UUID, related: UUID) async throws
+    func addPostTag(post: UUID, tag: UUID) async throws
 
-    func addReply(parentId: UUID, content: String) async throws -> Comment
+    func addRelatedPost(post: UUID, related: UUID) async throws
 
     func addTag(name: String) async throws -> UUID
 
-    func addTagAlias(tagId: UUID, alias: String) async throws -> TagName
+    func addTagAlias(tag: UUID, alias: String) async throws -> TagName
 
-    func addTagSource(tagId: UUID, url: String) async throws -> Source
+    func addTagSource(tag: UUID, url: String) async throws -> Source
 
-    func createPost(postId: UUID) async throws
+    func createPost(draft: UUID) async throws
 
     func createPostDraft() async throws -> UUID
 
-    func deletePost(postId: UUID) async throws
+    func delete(post: UUID) async throws
 
-    func deletePostObjects(postId: UUID, objects: [UUID]) async throws -> Date
+    func delete(post: UUID, objects: [UUID]) async throws -> Date
 
-    func deletePostTag(postId: UUID, tagId: UUID) async throws
+    func delete(post: UUID, tag: UUID) async throws
 
-    func deleteRelatedPost(postId: UUID, related: UUID) async throws
+    func delete(post: UUID, related: UUID) async throws
 
-    func deleteTag(tagId: UUID) async throws
+    func delete(tag: UUID) async throws
 
-    func deleteTagAlias(tagId: UUID, alias: String) async throws -> TagName
+    func delete(tag: UUID, alias: String) async throws -> TagName
 
-    func deleteTagSource(tagId: UUID, sourceId: Int64) async throws
+    func delete(tag: UUID, source: Int64) async throws
 
-    func getComment(commentId: UUID) async throws -> CommentDetail
+    func download(object: UUID) async throws -> URL
 
-    func getComments(postId: UUID) async throws -> [Comment]
+    func download(object: UUID, destination: URL) async throws
 
-    func getObject(objectId: UUID) async throws -> Object
+    func get(comment: UUID) async throws -> CommentDetail
 
-    func getObjectData(
-        objectId: UUID,
-        handler: (Data) async throws -> Void
-    ) async throws
+    func getComments(for post: UUID) async throws -> [Comment]
 
-    func getPost(postId: UUID) async throws -> Post
+    func get(object: UUID) async throws -> Object
+
+    func get(post: UUID) async throws -> Post
 
     func getPosts(query: PostQuery) async throws -> SearchResult<PostPreview>
 
     func getServerInfo() async throws -> ServerInfo
 
-    func getTag(tagId: UUID) async throws -> Tag
+    func get(tag: UUID) async throws -> Tag
 
     func getTags(query: TagQuery) async throws -> SearchResult<TagPreview>
 
-    func movePostObjects(
-        postId: UUID,
+    func insert(
+        post: UUID,
         objects: [UUID],
-        destination: UUID?
+        before destination: UUID
     ) async throws -> Date
 
-    func setCommentContent(
-        commentId: UUID,
-        content: String
-    ) async throws -> String
+    func reply(to parent: UUID, content: String) async throws -> Comment
 
-    func setPostDescription(
-        postId: UUID,
+    func set(comment: UUID, content: String) async throws -> String
+
+    func set(
+        post: UUID,
         description: String
     ) async throws -> Modification<String?>
 
-    func setPostTitle(
-        postId: UUID,
-        title: String
-    ) async throws -> Modification<String?>
+    func set(post: UUID, title: String) async throws -> Modification<String?>
 
-    func setTagDescription(
-        tagId: UUID,
-        description: String
-    ) async throws -> String?
+    func set(tag: UUID, description: String) async throws -> String?
 
-    func setTagName(tagId: UUID, newName: String) async throws -> TagName
+    func set(tag: UUID, name: String) async throws -> TagName
 }

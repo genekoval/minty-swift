@@ -1,13 +1,4 @@
-import Zipline
-
-public struct TagName: Codable, Hashable, ZiplineObject {
-    public static var coders: [Coder<Self>] {[
-        Coder(\Self.name),
-        Coder(\Self.aliases)
-    ]}
-
-    public var name: String = ""
-    public var aliases: [String] = []
-
-    public init() { }
+public struct TagName: Codable, Hashable {
+    public var name: String
+    public var aliases: [String]
 }

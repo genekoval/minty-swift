@@ -1,22 +1,10 @@
 import Foundation
-import Zipline
 
-public struct CommentDetail: Codable, Hashable, Identifiable, ZiplineObject {
-    public static var coders: [Coder<Self>] {[
-        Coder(\Self.id),
-        Coder(\Self.postId),
-        Coder(\Self.parentId),
-        Coder(\Self.indent),
-        Coder(\Self.content),
-        Coder(\Self.dateCreated)
-    ]}
-
-    public var id: UUID = .empty
-    public var postId: UUID = .empty
+public struct CommentDetail: Codable, Hashable, Identifiable {
+    public var id: UUID
+    public var postId: UUID
     public var parentId: UUID?
-    public var indent: Int16 = 0
-    public var content = ""
-    public var dateCreated = Date()
-
-    public init() { }
+    public var indent: Int
+    public var content: String
+    public var dateCreated: Date
 }

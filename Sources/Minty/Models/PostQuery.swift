@@ -1,37 +1,38 @@
 import Foundation
 
 public struct PostQuery {
-    public struct Sort {
-        public enum SortValue: String {
+    public struct Sort: Hashable {
+        public enum SortValue: String, Identifiable, CaseIterable {
             case dateCreated = "created"
             case dateModified = "modified"
             case relevance = "relevance"
             case title = "title"
+
+            public var defaultOrder: SortOrder {
+                switch self {
+                case .title: return .ascending
+                default: return .descending
+                }
+            }
+
+            public var id: Self { self }
         }
 
-        public static let created = Sort(
-            order: .descending,
-            value: .dateCreated
-        )
-        public static let modified = Sort(
-            order: .descending,
-            value: .dateModified
-        )
-        public static let relevance = Sort(
-            order: .descending,
-            value: .relevance
-        )
-        public static let title = Sort(
-            order: .ascending,
-            value: .title
-        )
+        public static let created = Sort(by: .dateCreated)
+        public static let modified = Sort(by: .dateModified)
+        public static let relevance = Sort(by: .relevance)
+        public static let title = Sort(by: .title)
 
         public var order: SortOrder
         public var value: SortValue
 
-        public init(order: SortOrder, value: SortValue) {
-            self.order = order
+        public init(by value: SortValue) {
+            self.init(by: value, order: value.defaultOrder)
+        }
+
+        public init(by value: SortValue, order: SortOrder) {
             self.value = value
+            self.order = order
         }
     }
 

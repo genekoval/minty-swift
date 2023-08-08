@@ -114,6 +114,7 @@ public final class HTTPClient: MintyRepo {
 
         var request = URLRequest(url: requestURL)
         request.httpMethod = "POST"
+        request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
 
         let (data, response) = try await session.upload(
             for: request,
@@ -135,6 +136,7 @@ public final class HTTPClient: MintyRepo {
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
+        request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
 
         let body = objects.map { $0.uuidString }.joined(separator: "\n")
 
@@ -228,6 +230,7 @@ public final class HTTPClient: MintyRepo {
 
         var request = URLRequest(url: requestURL)
         request.httpMethod = "POST"
+        request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
 
         let (data, response) = try await session.upload(
             for: request,
@@ -295,6 +298,7 @@ public final class HTTPClient: MintyRepo {
 
         var request = URLRequest(url: url)
         request.httpMethod = "DELETE"
+        request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
 
         let body = objects.map { $0.uuidString }.joined(separator: "\n")
 
@@ -579,6 +583,7 @@ public final class HTTPClient: MintyRepo {
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
+        request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
 
         let body = objects.map { $0.uuidString }.joined(separator: "\n")
 
@@ -604,6 +609,7 @@ public final class HTTPClient: MintyRepo {
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
+        request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
 
         let (data, response) = try await session.upload(
             for: request,
@@ -648,6 +654,7 @@ public final class HTTPClient: MintyRepo {
 
         var request = URLRequest(url: url)
         request.httpMethod = "PUT"
+        request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
 
         let (data, response) = try await session.upload(
             for: request,
@@ -672,6 +679,7 @@ public final class HTTPClient: MintyRepo {
 
         var request = URLRequest(url: url)
         request.httpMethod = "PUT"
+        request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
 
         let (data, response) = try await session.upload(
             for: request,
@@ -693,6 +701,7 @@ public final class HTTPClient: MintyRepo {
 
         var request = URLRequest(url: url)
         request.httpMethod = "PUT"
+        request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
 
         let (data, response) = try await session.upload(
             for: request,

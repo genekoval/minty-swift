@@ -3,10 +3,19 @@
     {
       "identity" : "fstore-swift",
       "kind" : "remoteSourceControl",
-      "location" : "https://git.aurora.aur/genya/fstore-swift.git",
+      "location" : "https://git.aurora.aur/genya/fstore-swift",
       "state" : {
-        "branch" : "http",
-        "revision" : "5032e68438017f1f3ba7ed860e0b34ae1d1b894e"
+        "branch" : "main",
+        "revision" : "0c58df8ab73c5d8c41e76492309f30bf3596102e"
+      }
+    },
+    {
+      "identity" : "swift-http",
+      "kind" : "remoteSourceControl",
+      "location" : "https://git.aurora.aur/genya/swift-http",
+      "state" : {
+        "branch" : "main",
+        "revision" : "4e88a055510964f1a2b63b0d84716f49a7022c8f"
       }
     }
   ],

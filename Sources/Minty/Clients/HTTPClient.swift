@@ -1,5 +1,6 @@
 import Foundation
 import Fstore
+import SwiftHTTP
 
 private extension Formatter {
     static let customISO8601DateFormatter: ISO8601DateFormatter = {
@@ -30,31 +31,43 @@ private extension JSONDecoder.DateDecodingStrategy {
    }
 }
 
+private extension Request {
+    @discardableResult
+    func query(name: String, value: [UUID]) -> Self {
+        query(
+            name: name,
+            value: value.map { $0.uuidString }.joined(separator: ",")
+        )
+    }
+}
+
+private extension Request {
+    func body(_ data: [UUID]) -> Self {
+        body(data.map { $0.uuidString }.joined(separator: "\n"))
+    }
+}
+
 public final class HTTPClient: MintyRepo {
-    private let baseURL: URL
     private let bucket: UUID
     private let objectStore: ObjectStore
-    private let session: URLSession
-    private let decoder: JSONDecoder
+
+    private let client: Client
 
     public let version: String
 
-    public init(baseURL: URL, session: URLSession = .shared) async throws {
-        self.baseURL = baseURL
-        self.session = session
-
-        decoder = JSONDecoder()
+    public init?(baseURL: URL, session: URLSession = .shared) async throws {
+        let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         decoder.dateDecodingStrategy = .iso8601WithFractionalSeconds
 
-        let (data, response) = try await session.data(from: baseURL)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
+        guard let client = Client(baseURL: baseURL, decoder: decoder) else {
+            return nil
         }
 
-        let info = try decoder.decode(ServerInfo.self, from: data)
+        self.client = client
+
+        let info: ServerInfo = try await client.get("/").send()
+
         self.version = info.version
         self.bucket = info.objectSource.bucketId
 
@@ -63,348 +76,138 @@ public final class HTTPClient: MintyRepo {
         components.host = info.objectSource.host ?? baseURL.host
         components.port = info.objectSource.port
 
-        objectStore = Fstore.HTTPClient(baseURL: components.url!)
+        guard
+            let url = components.url,
+            let store = Fstore.HTTPClient(baseURL: url)
+        else {
+            throw MintyError.unspecified(
+                message: "Failed to build valid object store URL: \(components)"
+            )
+        }
+
+        objectStore = store
     }
 
     public func addComment(
-        post: UUID,
+        post: Post.ID,
         content: String
     ) async throws -> Comment {
-        var url = baseURL.appending(path: "comments")
-        url.append(path: post.uuidString)
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-
-        let (data, response) = try await session.upload(
-            for: request,
-            from: Data(content.utf8)
-        )
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
-
-        return try decoder.decode(Comment.self, from: data)
+        try await client
+            .post("/comments/\(post)")
+            .body(content)
+            .send()
     }
 
     public func addObject(file: URL) async throws -> ObjectPreview {
-        let url = baseURL.appending(path: "object")
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-
-        let (data, response) = try await session.upload(
-            for: request,
-            fromFile: file
-        )
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
-
-        return try decoder.decode(ObjectPreview.self, from: data)
+        try await client
+            .post("/object")
+            .file(file)
+            .send()
     }
 
     public func addObjects(url: String) async throws -> [ObjectPreview] {
-        var requestURL = baseURL.appending(path: "object")
-        requestURL.append(path: "url")
-
-        var request = URLRequest(url: requestURL)
-        request.httpMethod = "POST"
-        request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
-
-        let (data, response) = try await session.upload(
-            for: request,
-            from: Data(url.utf8)
-        )
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
-
-        return try decoder.decode([ObjectPreview].self, from: data)
+        try await client
+            .post("/object/url")
+            .body(url)
+            .send()
     }
 
-    public func add(post: UUID, objects: [UUID]) async throws -> Date {
-        var url = baseURL.appending(path: "post")
-        url.append(path: post.uuidString)
-        url.append(path: "objects")
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
-
-        let body = objects.map { $0.uuidString }.joined(separator: "\n")
-
-        let (data, response) = try await session.upload(
-            for: request,
-            from: Data(body.utf8)
-        )
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
-
-        return try decoder.decode(Date.self, from: data)
+    public func add(post: Post.ID, objects: [Object.ID]) async throws -> Date {
+        try await client
+            .post("post/\(post)/objects")
+            .body(objects)
+            .send()
     }
 
-    public func addPostTag(post: UUID, tag: UUID) async throws {
-        var url = baseURL.appending(path: "post")
-        url.append(path: post.uuidString)
-        url.append(path: "tag")
-        url.append(path: tag.uuidString)
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "PUT"
-
-        let (_, response) = try await session.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
+    public func addPostTag(post: Post.ID, tag: Tag.ID) async throws {
+        try await client
+            .put("/post/\(post)/tag/\(tag)")
+            .send()
     }
 
-    public func addRelatedPost(post: UUID, related: UUID) async throws {
-        var url = baseURL.appending(path: "post")
-        url.append(path: post.uuidString)
-        url.append(path: "related")
-        url.append(path: related.uuidString)
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "PUT"
-
-        let (_, response) = try await session.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
+    public func addRelatedPost(post: Post.ID, related: Post.ID) async throws {
+        try await client
+            .put("/post/\(post)/related/\(related)")
+            .send()
     }
 
-    public func addTag(name: String) async throws -> UUID {
-        var url = baseURL.appending(path: "tag")
-        url.append(path: name)
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-
-        let (data, response) = try await session.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
-
-        return try decoder.decode(UUID.self, from: data)
+    public func addTag(name: String) async throws -> Tag.ID {
+        try await client
+            .post("/tag/\(name)")
+            .send()
     }
 
-    public func addTagAlias(tag: UUID, alias: String) async throws -> TagName {
-        var url = baseURL.appending(path: "tag")
-        url.append(path: tag.uuidString)
-        url.append(path: "name")
-        url.append(path: alias)
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "PUT"
-
-        let (data, response) = try await session.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
-
-        return try decoder.decode(TagName.self, from: data)
+    public func addTagAlias(
+        tag: Tag.ID,
+        alias: String
+    ) async throws -> TagName {
+        try await client
+            .put("/tag/\(tag)/name/\(alias)")
+            .send()
     }
 
-    public func addTagSource(tag: UUID, url: String) async throws -> Source {
-        var requestURL = baseURL.appending(path: "tag")
-        requestURL.append(path: tag.uuidString)
-        requestURL.append(path: "source")
-
-        var request = URLRequest(url: requestURL)
-        request.httpMethod = "POST"
-        request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
-
-        let (data, response) = try await session.upload(
-            for: request,
-            from: Data(url.utf8)
-        )
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
-
-        return try decoder.decode(Source.self, from: data)
+    public func addTagSource(tag: Tag.ID, url: String) async throws -> Source {
+        try await client
+            .post("/tag/\(tag)/source")
+            .body(url)
+            .send()
     }
 
-    public func createPost(draft: UUID) async throws {
-        var url = baseURL.appending(path: "post")
-        url.append(path: draft.uuidString)
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "PUT"
-
-        let (_, response) = try await session.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
+    public func createPost(draft: Post.ID) async throws {
+        try await client.put("/post/\(draft)").send()
     }
 
-    public func createPostDraft() async throws -> UUID {
-        let url = baseURL.appending(path: "post")
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-
-        let (data, response) = try await session.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
-
-        return try decoder.decode(UUID.self, from: data)
+    public func createPostDraft() async throws -> Post.ID {
+        try await client.post("/post").send()
     }
 
-    public func delete(post: UUID) async throws {
-        var url = baseURL.appending(path: "post")
-        url.append(path: post.uuidString)
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "DELETE"
-
-        let (_, response) = try await session.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
+    public func delete(post: Post.ID) async throws {
+        try await client.delete("/post/\(post)").send()
     }
 
-    public func delete(post: UUID, objects: [UUID]) async throws -> Date {
-        var url = baseURL.appending(path: "post")
-        url.append(path: post.uuidString)
-        url.append(path: "objects")
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "DELETE"
-        request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
-
-        let body = objects.map { $0.uuidString }.joined(separator: "\n")
-
-        let (data, response) = try await session.upload(
-            for: request,
-            from: Data(body.utf8)
-        )
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
-
-        return try decoder.decode(Date.self, from: data)
+    public func delete(
+        post: Post.ID,
+        objects: [Object.ID]
+    ) async throws -> Date {
+        try await client
+            .delete("/post/\(post)/objects")
+            .body(objects)
+            .send()
     }
 
-    public func delete(post: UUID, tag: UUID) async throws {
-        var url = baseURL.appending(path: "post")
-        url.append(path: post.uuidString)
-        url.append(path: "tag")
-        url.append(path: tag.uuidString)
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "DELETE"
-
-        let (_, response) = try await session.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
+    public func delete(post: Post.ID, tag: Tag.ID) async throws {
+        try await client
+            .delete("/post/\(post)/tag/\(tag)")
+            .send()
     }
 
-    public func delete(post: UUID, related: UUID) async throws {
-        var url = baseURL.appending(path: "post")
-        url.append(path: post.uuidString)
-        url.append(path: "related")
-        url.append(path: related.uuidString)
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "DELETE"
-
-        let (_, response) = try await session.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
+    public func delete(post: Post.ID, related: Post.ID) async throws {
+        try await client
+            .delete("/post/\(post)/related/\(related)")
+            .send()
     }
 
-    public func delete(tag: UUID) async throws {
-        var url = baseURL.appending(path: "tag")
-        url.append(path: tag.uuidString)
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "DELETE"
-
-        let (_, response) = try await session.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
+    public func delete(tag: Tag.ID) async throws {
+        try await client.delete("/tag/\(tag)").send()
     }
 
-    public func delete(tag: UUID, alias: String) async throws -> TagName {
-        var url = baseURL.appending(path: "tag")
-        url.append(path: tag.uuidString)
-        url.append(path: "name")
-        url.append(path: alias)
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "DELETE"
-
-        let (data, response) = try await session.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
-
-        return try decoder.decode(TagName.self, from: data)
+    public func delete(tag: Tag.ID, alias: String) async throws -> TagName {
+        try await client
+            .delete("/tag/\(tag)/name/\(alias)")
+            .send()
     }
 
-    public func delete(tag: UUID, source: Int64) async throws {
-        var url = baseURL.appending(path: "tag")
-        url.append(path: tag.uuidString)
-        url.append(path: "source")
-        url.append(path: String(source))
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "DELETE"
-
-        let (_, response) = try await session.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
+    public func delete(tag: Tag.ID, source: Source.ID) async throws {
+        try await client
+            .delete("/tag/\(tag)/source/\(source)")
+            .send()
     }
 
-    public func download(object: UUID) async throws -> URL {
+    public func download(object: Object.ID) async throws -> URL {
         try await objectStore.downloadObject(bucket: bucket, object: object)
     }
 
-    public func download(object: UUID, destination: URL) async throws {
+    public func download(object: Object.ID, destination: URL) async throws {
         try await objectStore.downloadObject(
             bucket: bucket,
             object: object,
@@ -412,327 +215,148 @@ public final class HTTPClient: MintyRepo {
         )
     }
 
-    public func get(comment: UUID) async throws -> CommentDetail {
-        var url = baseURL.appending(path: "comment")
-        url.append(path: comment.uuidString)
-
-        let (data, response) = try await session.data(from: url)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
-
-        return try decoder.decode(CommentDetail.self, from: data)
+    public func get(comment: CommentDetail.ID) async throws -> CommentDetail {
+        try await client
+            .get("/comment/\(comment)")
+            .send()
     }
 
-    public func getComments(for post: UUID) async throws -> [Comment] {
-        var url = baseURL.appending(path: "comments")
-        url.append(path: post.uuidString)
-
-        let (data, response) = try await session.data(from: url)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
-
-        return try decoder.decode([Comment].self, from: data)
+    public func getComments(for post: Post.ID) async throws -> [Comment] {
+        try await client
+            .get("/comments/\(post)")
+            .send()
     }
 
-    public func get(object: UUID) async throws -> Object {
-        var url = baseURL.appending(path: "object")
-        url.append(path: object.uuidString)
-
-        let (data, response) = try await session.data(from: url)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
-
-        return try decoder.decode(Object.self, from: data)
+    public func get(object: Object.ID) async throws -> Object {
+        try await client
+            .get("object/\(object)")
+            .send()
     }
 
-    public func get(post: UUID) async throws -> Post {
-        var url = baseURL.appending(path: "post")
-        url.append(path: post.uuidString)
-
-        let (data, response) = try await session.data(from: url)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
-
-        return try decoder.decode(Post.self, from: data)
+    public func get(post: Post.ID) async throws -> Post {
+        try await client
+            .get("/post/\(post)")
+            .send()
     }
 
     public func getPosts(
         query: PostQuery
     ) async throws -> SearchResult<PostPreview> {
-        var url = baseURL.appending(path: "posts")
-        url.append(queryItems: [
-            .init(name: "from", value: String(query.from)),
-            .init(name: "size", value: String(query.size)),
-            .init(name: "q", value: query.text),
-            .init(
-                name: "tags",
-                value: query.tags.map { $0.uuidString }.joined(separator: ",")
-            ),
-            .init(name: "vis", value: query.visibility.description),
-            .init(name: "sort", value: query.sort.value.rawValue),
-            .init(name: "order", value: query.sort.order.rawValue)
-        ])
+        let request = client
+            .get("/posts")
+            .query(name: "size", value: query.size)
 
-        let (data, response) = try await session.data(from: url)
+        if query.from > 0 { request.query(name: "from", value: query.from) }
 
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw MintyError.internalError
+        if let text = query.text { request.query(name: "q", value: text) }
+
+        if !query.tags.isEmpty {
+            request.query(name: "tags", value: query.tags)
         }
 
-        guard httpResponse.statusCode == 200 else {
-            let message = String(decoding: data, as: UTF8.self)
-
-            switch httpResponse.statusCode {
-            case 400: throw MintyError.invalidData(message: message)
-            default: throw MintyError.unspecified(message: message)
-            }
+        if query.visibility != .pub {
+            request.query(name: "vis", value: query.visibility)
         }
 
-        do {
-            return try decoder.decode(
-                SearchResult<PostPreview>.self,
-                from: data
-            )
-        }
-        catch DecodingError.keyNotFound(let key, let context) {
-            print("\(key): \(context.debugDescription)")
-        }
-        catch DecodingError.typeMismatch(_, let context) {
-            print("Type mismatch for key \(context.codingPath.last!.stringValue): \(context.debugDescription)")
-        }
-        catch {
-            print(error)
+        if query.sort != .created {
+            request.query(name: "sort", value: query.sort.value.rawValue)
+            request.query(name: "order", value: query.sort.order.rawValue)
         }
 
-        throw MintyError.internalError
+        return try await request.send()
     }
 
     public func getServerInfo() async throws -> ServerInfo {
-        let (data, response) = try await session.data(from: baseURL)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
-
-        return try decoder.decode(ServerInfo.self, from: data)
+        try await client
+            .get("/")
+            .send()
     }
 
-    public func get(tag: UUID) async throws -> Tag {
-        var url = baseURL.appending(path: "tag")
-        url.append(path: tag.uuidString)
-
-        let (data, response) = try await session.data(from: url)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
-
-        return try decoder.decode(Tag.self, from: data)
+    public func get(tag: Tag.ID) async throws -> Tag {
+        try await client
+            .get("/tag/\(tag)")
+            .send()
     }
 
-    public func getTags(query: TagQuery) async throws -> SearchResult<TagPreview> {
-        var url = baseURL.appending(path: "tags")
-        url.append(queryItems: [
-            .init(name: "from", value: String(query.from)),
-            .init(name: "size", value: String(query.size)),
-            .init(name: "name", value: query.name),
-            .init(
-                name: "exclude",
-                value: query.exclude.map {
-                    $0.uuidString
-                }.joined(separator: ",")
-            )
-        ])
+    public func getTags(
+        query: TagQuery
+    ) async throws -> SearchResult<TagPreview> {
+        let request = client
+            .get("/tags")
+            .query(name: "name", value: query.name)
+            .query(name: "size", value: query.size)
 
-        let (data, response) = try await session.data(from: url)
+        if query.from > 0 { request.query(name: "from", value: query.from) }
 
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
+        if !query.exclude.isEmpty {
+            request.query(name: "exclude", value: query.exclude)
         }
 
-        return try decoder.decode(
-            SearchResult<TagPreview>.self,
-            from: data
-        )
+        return try await request.send()
     }
 
     public func insert(
-        post: UUID,
-        objects: [UUID],
-        before destination: UUID
+        post: Post.ID,
+        objects: [Object.ID],
+        before destination: Object.ID
     ) async throws -> Date {
-        var url = baseURL.appending(path: "post")
-        url.append(path: post.uuidString)
-        url.append(path: "objects")
-        url.append(path: destination.uuidString)
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
-
-        let body = objects.map { $0.uuidString }.joined(separator: "\n")
-
-        let (data, response) = try await session.upload(
-            for: request,
-            from: Data(body.utf8)
-        )
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
-
-        return try decoder.decode(Date.self, from: data)
+        try await client
+            .post("/post/\(post)/objects/\(destination)")
+            .body(objects)
+            .send()
     }
 
     public func reply(
-        to parent: UUID,
+        to parent: Comment.ID,
         content: String
     ) async throws -> Comment {
-        var url = baseURL.appending(path: "comment")
-        url.append(path: parent.uuidString)
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
-
-        let (data, response) = try await session.upload(
-            for: request,
-            from: Data(content.utf8)
-        )
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
-
-        return try decoder.decode(Comment.self, from: data)
-    }
-
-    public func set(comment: UUID, content: String) async throws -> String {
-        var url = baseURL.appending(path: "comment")
-        url.append(path: comment.uuidString)
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "PUT"
-
-        let (data, response) = try await session.upload(
-            for: request,
-            from: Data(content.utf8)
-        )
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
-
-        return try decoder.decode(String.self, from: data)
+        try await client
+            .post("/comment/\(parent)")
+            .body(content)
+            .send()
     }
 
     public func set(
-        post: UUID,
+        comment: Comment.ID,
+        content: String
+    ) async throws -> String {
+        try await client
+            .put("/comment/\(comment)")
+            .body(content)
+            .send()
+    }
+
+    public func set(
+        post: Post.ID,
         description: String
     ) async throws -> Modification<String?> {
-        var url = baseURL.appending(path: "post")
-        url.append(path: post.uuidString)
-        url.append(path: "description")
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "PUT"
-        request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
-
-        let (data, response) = try await session.upload(
-            for: request,
-            from: Data(description.utf8)
-        )
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
-
-        return try decoder.decode(Modification<String?>.self, from: data)
+        try await client
+            .put("/post/\(post)/description")
+            .body(description)
+            .send()
     }
 
     public func set(
-        post: UUID,
+        post: Post.ID,
         title: String
     ) async throws -> Modification<String?> {
-        var url = baseURL.appending(path: "post")
-        url.append(path: post.uuidString)
-        url.append(path: "title")
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "PUT"
-        request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
-
-        let (data, response) = try await session.upload(
-            for: request,
-            from: Data(title.utf8)
-        )
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
-
-        return try decoder.decode(Modification<String?>.self, from: data)
+        try await client
+            .put("/post/\(post)/title")
+            .body(title)
+            .send()
     }
 
-    public func set(tag: UUID, description: String) async throws -> String? {
-        var url = baseURL.appending(path: "tag")
-        url.append(path: tag.uuidString)
-        url.append(path: "description")
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "PUT"
-        request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
-
-        let (data, response) = try await session.upload(
-            for: request,
-            from: Data(description.utf8)
-        )
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
-
-        return try decoder.decode(String?.self, from: data)
+    public func set(tag: Tag.ID, description: String) async throws -> String? {
+        try await client
+            .put("/tag/\(tag)/description")
+            .body(description)
+            .send()
     }
 
-    public func set(tag: UUID, name: String) async throws -> TagName {
-        var url = baseURL.appending(path: "tag")
-        url.append(path: tag.uuidString)
-        url.append(path: "name")
-        url.append(path: name)
-        url.append(queryItems: [.init(name: "main", value: "t")])
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "PUT"
-
-        let (data, response) = try await session.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MintyError.internalError
-        }
-
-        return try decoder.decode(TagName.self, from: data)
+    public func set(tag: Tag.ID, name: String) async throws -> TagName {
+        try await client
+            .put("/tag/\(tag)/name/\(name)")
+            .query(name: "main", value: true)
+            .send()
     }
 }

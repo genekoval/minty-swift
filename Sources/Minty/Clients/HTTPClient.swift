@@ -229,7 +229,7 @@ public final class HTTPClient: MintyRepo {
 
     public func get(object: Object.ID) async throws -> Object {
         try await client
-            .get("object/\(object)")
+            .get("/object/\(object)")
             .send()
     }
 

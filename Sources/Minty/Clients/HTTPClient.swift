@@ -69,19 +69,14 @@ public final class HTTPClient: MintyRepo {
         let info: ServerInfo = try await client.get("/").send()
 
         self.version = info.version
-        self.bucket = info.objectSource.bucketId
+        self.bucket = info.objectSource.bucket
 
-        var components = URLComponents()
-        components.scheme = baseURL.scheme
-        components.host = info.objectSource.host ?? baseURL.host
-        components.port = info.objectSource.port
+        let url = info.objectSource.location
 
-        guard
-            let url = components.url,
-            let store = Fstore.HTTPClient(baseURL: url)
+        guard let store = Fstore.HTTPClient(baseURL: url)
         else {
             throw MintyError.unspecified(
-                message: "Failed to build valid object store URL: \(components)"
+                message: "Failed to initialize Fstore client with URL '\(url)'"
             )
         }
 

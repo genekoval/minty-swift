@@ -1,9 +1,8 @@
 import Foundation
 
 public struct ObjectSource: Codable, Hashable {
-    public var host: String?
-    public var port: Int
-    public var bucketId: UUID
+    public var location: URL
+    public var bucket: UUID
 }
 
 public struct ServerInfo: Codable, Hashable {

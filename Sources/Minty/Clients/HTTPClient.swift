@@ -114,7 +114,7 @@ public final class HTTPClient: MintyRepo {
 
     public func add(post: Post.ID, objects: [Object.ID]) async throws -> Date {
         try await client
-            .post("post/\(post)/objects")
+            .post("/post/\(post)/objects")
             .body(objects)
             .send()
     }

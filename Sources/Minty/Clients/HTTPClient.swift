@@ -210,10 +210,10 @@ public final class HTTPClient: MintyRepo {
         )
     }
 
-    public func get(comment: CommentDetail.ID) async throws -> CommentDetail {
+    public func get(comment: CommentDetail.ID) async throws -> CommentDetail? {
         try await client
             .get("/comment/\(comment)")
-            .send()
+            .find()
     }
 
     public func getComments(for post: Post.ID) async throws -> [Comment] {
@@ -222,16 +222,16 @@ public final class HTTPClient: MintyRepo {
             .send()
     }
 
-    public func get(object: Object.ID) async throws -> Object {
+    public func get(object: Object.ID) async throws -> Object? {
         try await client
             .get("/object/\(object)")
-            .send()
+            .find()
     }
 
-    public func get(post: Post.ID) async throws -> Post {
+    public func get(post: Post.ID) async throws -> Post? {
         try await client
             .get("/post/\(post)")
-            .send()
+            .find()
     }
 
     public func getPosts(
@@ -267,10 +267,10 @@ public final class HTTPClient: MintyRepo {
             .send()
     }
 
-    public func get(tag: Tag.ID) async throws -> Tag {
+    public func get(tag: Tag.ID) async throws -> Tag? {
         try await client
             .get("/tag/\(tag)")
-            .send()
+            .find()
     }
 
     public func getTags(

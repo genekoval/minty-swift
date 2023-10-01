@@ -43,19 +43,19 @@ public protocol MintyRepo {
 
     func download(object: Object.ID, destination: URL) async throws
 
-    func get(comment: CommentDetail.ID) async throws -> CommentDetail
+    func get(comment: CommentDetail.ID) async throws -> CommentDetail?
 
     func getComments(for post: Post.ID) async throws -> [Comment]
 
-    func get(object: Object.ID) async throws -> Object
+    func get(object: Object.ID) async throws -> Object?
 
-    func get(post: Post.ID) async throws -> Post
+    func get(post: Post.ID) async throws -> Post?
 
     func getPosts(query: PostQuery) async throws -> SearchResult<PostPreview>
 
     func getServerInfo() async throws -> ServerInfo
 
-    func get(tag: Tag.ID) async throws -> Tag
+    func get(tag: Tag.ID) async throws -> Tag?
 
     func getTags(query: TagQuery) async throws -> SearchResult<TagPreview>
 

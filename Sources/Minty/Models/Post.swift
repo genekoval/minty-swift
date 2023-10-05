@@ -10,4 +10,5 @@ public struct Post: Codable, Hashable, Identifiable {
     public var objects: [ObjectPreview]
     public var posts: [PostPreview]
     public var tags: [TagPreview]
+    public var commentCount: Int
 }

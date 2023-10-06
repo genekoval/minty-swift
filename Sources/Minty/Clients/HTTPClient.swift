@@ -156,6 +156,15 @@ public final class HTTPClient: MintyRepo {
         try await client.post("/post").send()
     }
 
+    public func delete(
+        comment: CommentDetail.ID,
+        recursive: Bool
+    ) async throws -> Bool {
+        let request = client.delete("/comment/\(comment)")
+        if recursive { request.query(name: "r", value: recursive) }
+        return try await request.data() != nil
+    }
+
     public func delete(post: Post.ID) async throws {
         try await client.delete("/post/\(post)").send()
     }

@@ -25,6 +25,8 @@ public protocol MintyRepo {
 
     func createPostDraft() async throws -> Post.ID
 
+    func delete(comment: CommentDetail.ID, recursive: Bool) async throws -> Bool
+
     func delete(post: Post.ID) async throws
 
     func delete(post: Post.ID, objects: [Object.ID]) async throws -> Date

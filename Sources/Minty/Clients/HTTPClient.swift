@@ -159,10 +159,10 @@ public final class HTTPClient: MintyRepo {
     public func delete(
         comment: CommentDetail.ID,
         recursive: Bool
-    ) async throws -> Bool {
+    ) async throws {
         let request = client.delete("/comment/\(comment)")
         if recursive { request.query(name: "r", value: recursive) }
-        return try await request.data() != nil
+        return try await request.send()
     }
 
     public func delete(post: Post.ID) async throws {
@@ -219,10 +219,10 @@ public final class HTTPClient: MintyRepo {
         )
     }
 
-    public func get(comment: CommentDetail.ID) async throws -> CommentDetail? {
+    public func get(comment: CommentDetail.ID) async throws -> CommentDetail {
         try await client
             .get("/comment/\(comment)")
-            .find()
+            .send()
     }
 
     public func getComments(for post: Post.ID) async throws -> [Comment] {
@@ -231,16 +231,16 @@ public final class HTTPClient: MintyRepo {
             .send()
     }
 
-    public func get(object: Object.ID) async throws -> Object? {
+    public func get(object: Object.ID) async throws -> Object {
         try await client
             .get("/object/\(object)")
-            .find()
+            .send()
     }
 
-    public func get(post: Post.ID) async throws -> Post? {
+    public func get(post: Post.ID) async throws -> Post {
         try await client
             .get("/post/\(post)")
-            .find()
+            .send()
     }
 
     public func getPosts(
@@ -276,10 +276,10 @@ public final class HTTPClient: MintyRepo {
             .send()
     }
 
-    public func get(tag: Tag.ID) async throws -> Tag? {
+    public func get(tag: Tag.ID) async throws -> Tag {
         try await client
             .get("/tag/\(tag)")
-            .find()
+            .send()
     }
 
     public func getTags(
@@ -333,7 +333,7 @@ public final class HTTPClient: MintyRepo {
     public func set(
         post: Post.ID,
         description: String
-    ) async throws -> Modification<String?> {
+    ) async throws -> Modification<String> {
         try await client
             .put("/post/\(post)/description")
             .body(description)
@@ -343,14 +343,14 @@ public final class HTTPClient: MintyRepo {
     public func set(
         post: Post.ID,
         title: String
-    ) async throws -> Modification<String?> {
+    ) async throws -> Modification<String> {
         try await client
             .put("/post/\(post)/title")
             .body(title)
             .send()
     }
 
-    public func set(tag: Tag.ID, description: String) async throws -> String? {
+    public func set(tag: Tag.ID, description: String) async throws -> String {
         try await client
             .put("/tag/\(tag)/description")
             .body(description)

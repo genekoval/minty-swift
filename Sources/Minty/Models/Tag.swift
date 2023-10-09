@@ -4,7 +4,7 @@ public struct Tag: Codable, Hashable, Identifiable {
     public var id: UUID
     public var name: String
     public var aliases: [String]
-    public var description: String?
+    public var description: String
     public var avatar: UUID?
     public var banner: UUID?
     public var sources: [Source]

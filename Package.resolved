@@ -6,7 +6,7 @@
       "location" : "https://git.aurora.aur/genya/fstore-swift",
       "state" : {
         "branch" : "main",
-        "revision" : "640e10194264e51e062c3653f2ed8dbf3459f03b"
+        "revision" : "c67c64a2c070e67a292d7950089279c048820f50"
       }
     },
     {
@@ -15,7 +15,7 @@
       "location" : "https://git.aurora.aur/genya/swift-http",
       "state" : {
         "branch" : "main",
-        "revision" : "fde1ccf2f3635994a22fb5b9f12d157def661048"
+        "revision" : "a5436799dd8ec629e3f06ad8045f4a0c2bbc9763"
       }
     }
   ],

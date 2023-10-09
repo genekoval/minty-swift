@@ -25,7 +25,7 @@ public protocol MintyRepo {
 
     func createPostDraft() async throws -> Post.ID
 
-    func delete(comment: CommentDetail.ID, recursive: Bool) async throws -> Bool
+    func delete(comment: CommentDetail.ID, recursive: Bool) async throws
 
     func delete(post: Post.ID) async throws
 
@@ -45,19 +45,19 @@ public protocol MintyRepo {
 
     func download(object: Object.ID, destination: URL) async throws
 
-    func get(comment: CommentDetail.ID) async throws -> CommentDetail?
+    func get(comment: CommentDetail.ID) async throws -> CommentDetail
 
     func getComments(for post: Post.ID) async throws -> [Comment]
 
-    func get(object: Object.ID) async throws -> Object?
+    func get(object: Object.ID) async throws -> Object
 
-    func get(post: Post.ID) async throws -> Post?
+    func get(post: Post.ID) async throws -> Post
 
     func getPosts(query: PostQuery) async throws -> SearchResult<PostPreview>
 
     func getServerInfo() async throws -> ServerInfo
 
-    func get(tag: Tag.ID) async throws -> Tag?
+    func get(tag: Tag.ID) async throws -> Tag
 
     func getTags(query: TagQuery) async throws -> SearchResult<TagPreview>
 
@@ -74,11 +74,11 @@ public protocol MintyRepo {
     func set(
         post: Post.ID,
         description: String
-    ) async throws -> Modification<String?>
+    ) async throws -> Modification<String>
 
-    func set(post: Post.ID, title: String) async throws -> Modification<String?>
+    func set(post: Post.ID, title: String) async throws -> Modification<String>
 
-    func set(tag: Tag.ID, description: String) async throws -> String?
+    func set(tag: Tag.ID, description: String) async throws -> String
 
     func set(tag: Tag.ID, name: String) async throws -> TagName
 }

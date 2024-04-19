@@ -28,7 +28,7 @@ public struct Modification<T: Codable>: Codable {
 public struct Object: Codable, Hashable, Identifiable {
     public var id: UUID
     public var hash: String
-    public var size: Int
+    public var size: Int64
     public var type: String
     public var subtype: String
     public var added: Date

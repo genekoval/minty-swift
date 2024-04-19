@@ -1,5 +1,4 @@
 import Foundation
-import Fstore
 import SwiftHTTP
 
 private extension Formatter {
@@ -39,97 +38,153 @@ private extension Request {
             value: value.map { $0.uuidString }.joined(separator: ",")
         )
     }
+
+    func download2() async throws -> URL {
+        do {
+            return try await download()
+        }
+        catch {
+            throw mapMintyError(error)
+        }
+    }
+
+    func send2() async throws {
+        do {
+            try await send()
+        }
+        catch {
+            throw mapMintyError(error)
+        }
+    }
+
+    func send2<T>() async throws -> T where T : Decodable {
+        do {
+            return try await send()
+        }
+        catch {
+            throw mapMintyError(error)
+        }
+    }
+
+    func date() async throws -> Date {
+        let text: String = try await send2()
+
+        guard let date = Formatter.customISO8601DateFormatter.date(from: text)
+        else {
+            throw MintyError.other(
+                message: "Received invalid date from server: \(text)"
+            )
+        }
+
+        return date
+    }
+
+    func uuid() async throws -> UUID {
+        let text: String = try await send2()
+
+        guard let uuid = UUID(uuidString: text) else {
+            throw MintyError.other(
+                message: "Received invalid UUID from server: \(text)"
+            )
+        }
+
+        return uuid
+    }
 }
 
-private extension Request {
-    func body(_ data: [UUID]) -> Self {
-        body(data.map { $0.uuidString }.joined(separator: "\n"))
+private func mapMintyError(_ error: any Swift.Error) -> MintyError {
+    guard let error = error as? Error else {
+        return .other(message: "\(error)")
+    }
+
+    switch error {
+    case Error.generic(let message):
+        return .other(message: message)
+    case Error.networkError(let cause):
+        return .networkError(cause: cause)
+    case Error.badResponse(let response, let data):
+        let status = response.statusCode
+        let message = if case let ErrorData.string(string) = data {
+            string
+        } else {
+            "<error message could not be decoded>"
+        }
+
+        switch status {
+        case 400: return .invalidData(message: message)
+        case 404: return .parseNotFound(message: message)
+        case 500: return .serverError
+        default:
+            return .other(
+                message: "Bad response from server (\(status)): \(message)"
+            )
+        }
+    case Error.invalidURL:
+        return .other(message: "Bad URL")
     }
 }
 
 public final class HTTPClient: MintyRepo {
-    private let bucket: UUID
-    private let objectStore: ObjectStore
-
     private let client: Client
 
-    public let version: String
-
-    public init?(baseURL: URL, session: URLSession = .shared) async throws {
+    public init?(baseURL: URL, session: URLSession = .shared) {
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         decoder.dateDecodingStrategy = .iso8601WithFractionalSeconds
 
-        guard let client = Client(baseURL: baseURL, decoder: decoder) else {
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+
+        guard let client = Client(
+            baseURL: baseURL,
+            decoder: decoder,
+            encoder: encoder
+        ) else {
             return nil
         }
 
         self.client = client
+    }
 
-        let info: ServerInfo = try await client.get("/").send()
-
-        self.version = info.version
-        self.bucket = info.objectSource.bucket
-
-        let url = info.objectSource.location
-
-        guard let store = Fstore.HTTPClient(baseURL: url)
-        else {
-            throw MintyError.unspecified(
-                message: "Failed to initialize Fstore client with URL '\(url)'"
-            )
-        }
-
-        objectStore = store
+    public func about() async throws -> About {
+        try await client
+            .get("/")
+            .send2()
     }
 
     public func addComment(
         post: Post.ID,
         content: String
-    ) async throws -> Comment {
+    ) async throws -> CommentData {
         try await client
             .post("/comments/\(post)")
             .body(content)
-            .send()
+            .send2()
     }
 
     public func addObject(file: URL) async throws -> ObjectPreview {
         try await client
             .post("/object")
             .file(file)
-            .send()
-    }
-
-    public func addObjects(url: String) async throws -> [ObjectPreview] {
-        try await client
-            .post("/object/url")
-            .body(url)
-            .send()
-    }
-
-    public func add(post: Post.ID, objects: [Object.ID]) async throws -> Date {
-        try await client
-            .post("/post/\(post)/objects")
-            .body(objects)
-            .send()
+            .send2()
     }
 
     public func addPostTag(post: Post.ID, tag: Tag.ID) async throws {
         try await client
             .put("/post/\(post)/tag/\(tag)")
-            .send()
+            .send2()
     }
 
     public func addRelatedPost(post: Post.ID, related: Post.ID) async throws {
         try await client
             .put("/post/\(post)/related/\(related)")
-            .send()
+            .send2()
     }
 
     public func addTag(name: String) async throws -> Tag.ID {
         try await client
             .post("/tag/\(name)")
-            .send()
+            .uuid()
     }
 
     public func addTagAlias(
@@ -138,109 +193,119 @@ public final class HTTPClient: MintyRepo {
     ) async throws -> TagName {
         try await client
             .put("/tag/\(tag)/name/\(alias)")
-            .send()
+            .send2()
     }
 
-    public func addTagSource(tag: Tag.ID, url: String) async throws -> Source {
+    public func addTagSource(tag: Tag.ID, url: URL) async throws -> Source {
         try await client
             .post("/tag/\(tag)/source")
-            .body(url)
-            .send()
+            .encode(url)
+            .send2()
     }
 
-    public func createPost(draft: Post.ID) async throws {
-        try await client.put("/post/\(draft)").send()
-    }
-
-    public func createPostDraft() async throws -> Post.ID {
-        try await client.post("/post").send()
-    }
-
-    public func delete(
-        comment: CommentDetail.ID,
-        recursive: Bool
-    ) async throws {
-        let request = client.delete("/comment/\(comment)")
-        if recursive { request.query(name: "r", value: recursive) }
-        return try await request.send()
-    }
-
-    public func delete(post: Post.ID) async throws {
-        try await client.delete("/post/\(post)").send()
-    }
-
-    public func delete(
+    public func appendPostObjects(
         post: Post.ID,
         objects: [Object.ID]
     ) async throws -> Date {
         try await client
-            .delete("/post/\(post)/objects")
-            .body(objects)
-            .send()
+            .post("/post/\(post)/objects")
+            .encode(objects)
+            .date()
     }
 
-    public func delete(post: Post.ID, tag: Tag.ID) async throws {
+    public func createPost(parts: PostParts) async throws -> Post.ID {
         try await client
-            .delete("/post/\(post)/tag/\(tag)")
-            .send()
+            .post("/post")
+            .encode(parts)
+            .uuid()
     }
 
-    public func delete(post: Post.ID, related: Post.ID) async throws {
+    public func deleteComment(id: Comment.ID, recursive: Bool) async throws {
+        let request = client.delete("/comment/\(id)")
+        if recursive { request.query(name: "recursive", value: recursive) }
+        return try await request.send2()
+    }
+
+    public func deletePost(id: Post.ID) async throws {
         try await client
-            .delete("/post/\(post)/related/\(related)")
-            .send()
+            .delete("/post/\(id)")
+            .send2()
     }
 
-    public func delete(tag: Tag.ID) async throws {
-        try await client.delete("/tag/\(tag)").send()
-    }
-
-    public func delete(tag: Tag.ID, alias: String) async throws -> TagName {
+    public func deletePostObjects(
+        id: Post.ID,
+        objects: [Object.ID]
+    ) async throws -> Date {
         try await client
-            .delete("/tag/\(tag)/name/\(alias)")
-            .send()
+            .delete("/post/\(id)/objects")
+            .encode(objects)
+            .date()
     }
 
-    public func delete(tag: Tag.ID, source: Source.ID) async throws {
+    public func deletePostTag(id: Post.ID, tag: Tag.ID) async throws {
         try await client
-            .delete("/tag/\(tag)/source/\(source)")
-            .send()
+            .delete("/post/\(id)/tag/\(tag)")
+            .send2()
+    }
+
+    public func deleteRelatedPost(id: Post.ID, related: Post.ID) async throws {
+        try await client
+            .delete("/post/\(id)/related/\(related)")
+            .send2()
+    }
+
+    public func deleteTag(id: Tag.ID) async throws {
+        try await client.delete("/tag/\(id)").send2()
+    }
+
+    public func deleteTagAlias(
+        id: Tag.ID,
+        alias: String
+    ) async throws -> TagName {
+        try await client
+            .delete("/tag/\(id)/name/\(alias)")
+            .send2()
+    }
+
+    public func deleteTagSource(id: Tag.ID, source: Source.ID) async throws {
+        try await client
+            .delete("/tag/\(id)/source/\(source)")
+            .send2()
     }
 
     public func download(object: Object.ID) async throws -> URL {
-        try await objectStore.downloadObject(bucket: bucket, object: object)
-    }
-
-    public func download(object: Object.ID, destination: URL) async throws {
-        try await objectStore.downloadObject(
-            bucket: bucket,
-            object: object,
-            destination: destination
-        )
-    }
-
-    public func get(comment: CommentDetail.ID) async throws -> CommentDetail {
         try await client
-            .get("/comment/\(comment)")
-            .send()
+            .get("/object/\(object)/data")
+            .download2()
     }
 
-    public func getComments(for post: Post.ID) async throws -> [Comment] {
+    public func download(object: Object.ID, to destination: URL) async throws {
+        let location = try await download(object: object)
+        try FileManager.default.moveItem(at: location, to: destination)
+    }
+
+    public func getComment(id: Comment.ID) async throws -> Comment {
+        try await client
+            .get("/comment/\(id)")
+            .send2()
+    }
+
+    public func getComments(for post: Post.ID) async throws -> [CommentData] {
         try await client
             .get("/comments/\(post)")
-            .send()
+            .send2()
     }
 
-    public func get(object: Object.ID) async throws -> Object {
+    public func getObject(id: Object.ID) async throws -> Object {
         try await client
-            .get("/object/\(object)")
-            .send()
+            .get("/object/\(id)")
+            .send2()
     }
 
-    public func get(post: Post.ID) async throws -> Post {
+    public func getPost(id: Post.ID) async throws -> Post {
         try await client
-            .get("/post/\(post)")
-            .send()
+            .get("/post/\(id)")
+            .send2()
     }
 
     public func getPosts(
@@ -252,7 +317,9 @@ public final class HTTPClient: MintyRepo {
 
         if query.from > 0 { request.query(name: "from", value: query.from) }
 
-        if let text = query.text { request.query(name: "q", value: text) }
+        if !query.text.isEmpty {
+            request.query(name: "q", value: query.text)
+        }
 
         if !query.tags.isEmpty {
             request.query(name: "tags", value: query.tags)
@@ -267,19 +334,13 @@ public final class HTTPClient: MintyRepo {
             request.query(name: "order", value: query.sort.order.rawValue)
         }
 
-        return try await request.send()
+        return try await request.send2()
     }
 
-    public func getServerInfo() async throws -> ServerInfo {
+    public func getTag(id: Tag.ID) async throws -> Tag {
         try await client
-            .get("/")
-            .send()
-    }
-
-    public func get(tag: Tag.ID) async throws -> Tag {
-        try await client
-            .get("/tag/\(tag)")
-            .send()
+            .get("/tag/\(id)")
+            .send2()
     }
 
     public func getTags(
@@ -296,71 +357,80 @@ public final class HTTPClient: MintyRepo {
             request.query(name: "exclude", value: query.exclude)
         }
 
-        return try await request.send()
+        return try await request.send2()
     }
 
-    public func insert(
-        post: Post.ID,
+    public func insertPostObjects(
+        id: Post.ID,
         objects: [Object.ID],
         before destination: Object.ID
     ) async throws -> Date {
         try await client
-            .post("/post/\(post)/objects/\(destination)")
-            .body(objects)
-            .send()
+            .post("/post/\(id)/objects/\(destination)")
+            .encode(objects)
+            .date()
+    }
+
+    public func publishPost(id: Post.ID) async throws {
+        try await client
+            .put("/post/\(id)")
+            .send2()
     }
 
     public func reply(
         to parent: Comment.ID,
         content: String
-    ) async throws -> Comment {
+    ) async throws -> CommentData {
         try await client
             .post("/comment/\(parent)")
             .body(content)
-            .send()
+            .send2()
     }
 
-    public func set(
-        comment: Comment.ID,
+    public func setCommentContent(
+        id: Comment.ID,
         content: String
     ) async throws -> String {
         try await client
-            .put("/comment/\(comment)")
+            .put("/comment/\(id)")
             .body(content)
-            .send()
+            .send2()
     }
 
-    public func set(
-        post: Post.ID,
+    public func setPostDescription(
+        id: Post.ID,
         description: String
     ) async throws -> Modification<String> {
         try await client
-            .put("/post/\(post)/description")
+            .put("/post/\(id)/description")
             .body(description)
-            .send()
+            .send2()
     }
 
-    public func set(
-        post: Post.ID,
+    public func setPostTitle(
+        id: Post.ID,
         title: String
     ) async throws -> Modification<String> {
         try await client
-            .put("/post/\(post)/title")
+            .put("/post/\(id)/title")
             .body(title)
-            .send()
+            .send2()
     }
 
-    public func set(tag: Tag.ID, description: String) async throws -> String {
+    public func setTagDescription(
+        id: Tag.ID,
+        description: String
+    ) async throws -> String {
         try await client
-            .put("/tag/\(tag)/description")
+            .put("/tag/\(id)/description")
             .body(description)
-            .send()
+            .send2()
     }
 
-    public func set(tag: Tag.ID, name: String) async throws -> TagName {
+    public func setTagName(id: Tag.ID, name: String) async throws -> TagName {
         try await client
-            .put("/tag/\(tag)/name/\(name)")
+            .put("/tag/\(id)/name/\(name)")
             .query(name: "main", value: true)
-            .send()
+            .send2()
     }
 }

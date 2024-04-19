@@ -1,4 +1,4 @@
-// swift-tools-version:5.8
+// swift-tools-version:5.10
 
 import PackageDescription
 
@@ -16,10 +16,6 @@ let package = Package(
     ],
     dependencies: [
         .package(
-            url: "https://git.aurora.aur/genya/fstore-swift",
-            branch: "main"
-        ),
-        .package(
             url: "https://git.aurora.aur/genya/swift-http",
             branch: "main"
         )
@@ -28,8 +24,10 @@ let package = Package(
         .target(
             name: "Minty",
             dependencies: [
-                .product(name: "Fstore", package: "fstore-swift"),
                 .product(name: "SwiftHTTP", package: "swift-http")
+            ],
+            swiftSettings: [
+                .enableUpcomingFeature("BareSlashRegexLiterals")
             ]
         ),
         .testTarget(

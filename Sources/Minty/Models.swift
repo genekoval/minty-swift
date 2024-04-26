@@ -1,7 +1,7 @@
 import Foundation
 
 public struct About: Codable {
-    public var version: Version
+    public var version: String
 }
 
 public struct Comment: Codable, Hashable, Identifiable {
@@ -224,18 +224,6 @@ public struct TagQuery: Hashable {
         self.name = name
         self.exclude = exclude
     }
-}
-
-public struct Version: Codable {
-    public var number: String
-    public var branch: String
-    public var buildTime: String
-    public var buildOs: String
-    public var buildType: String
-    public var commitHash: String
-    public var commitDate: String
-    public var rustVersion: String
-    public var rustChannel: String
 }
 
 public enum Visibility: Int32, Codable, CustomStringConvertible {

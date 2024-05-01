@@ -17,7 +17,7 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://git.aurora.aur/genya/swift-http",
-            branch: "main"
+            exact: "0.1.0"
         )
     ],
     targets: [

@@ -3,14 +3,14 @@ import XCTest
 
 private let url = URL(string: "https://example.com/hello")!
 
-final class TagTests: XCTestCase {
+final class TagTests: MintyTests {
     func testAddTag() async throws {
         let name = "Minty Test"
         let id = try await repo.addTag(name: name)
         let tag = try await repo.getTag(id: id)
 
         XCTAssertEqual(id, tag.id)
-        XCTAssertEqual(name, tag.name)
+        XCTAssertEqual(name, tag.profile.name)
     }
 
     func testAddTagAlias() async throws {
@@ -33,7 +33,7 @@ final class TagTests: XCTestCase {
 
         let tag = try await repo.getTag(id: id)
 
-        XCTAssertEqual([source], tag.sources)
+        XCTAssertEqual([source], tag.profile.sources)
     }
 
     func testDeleteTag() async throws {
@@ -72,14 +72,14 @@ final class TagTests: XCTestCase {
 
         let tag = try await repo.getTag(id: id)
 
-        XCTAssert(tag.sources.isEmpty)
+        XCTAssert(tag.profile.sources.isEmpty)
     }
 
     func testGetTags() async throws {
         let name = "Swift"
         let id = try await repo.addTag(name: name)
 
-        let query = TagQuery(size: 10_000, name: "s")
+        let query = ProfileQuery(size: 10_000, name: "s")
         let result = try await repo.getTags(query: query)
         XCTAssert(result.total >= 1)
 

@@ -43,3 +43,8 @@ struct Tags {
     static let videos =
         UUID(staticString: "04A7B298-3D23-4916-A2C7-62FB201FC40D")
 }
+
+struct Users {
+    static let minty =
+        UUID(staticString: "99786976-95bd-49ff-892e-cd76580aec5a")
+}

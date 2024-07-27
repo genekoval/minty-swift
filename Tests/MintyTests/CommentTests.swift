@@ -1,7 +1,7 @@
 import XCTest
 @testable import Minty
 
-final class CommentTests: XCTestCase {
+final class CommentTests: MintyTests {
     func testAddComment() async throws {
         let content = "A new comment!"
 

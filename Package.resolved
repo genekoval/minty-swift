@@ -1,13 +1,13 @@
 {
-  "originHash" : "95e1531040a57d9079202691ca12258d0536c1da24e7fd9e3c43f7534de0036d",
+  "originHash" : "a971258baaf5fe17b452ad92a2c4b371e69de9fc4ca4fa323d3237c4e16b9d4f",
   "pins" : [
     {
       "identity" : "swift-http",
       "kind" : "remoteSourceControl",
       "location" : "https://git.aurora.aur/genya/swift-http",
       "state" : {
-        "revision" : "43d1cab49167471cc6258783288403ceb2f86566",
-        "version" : "0.1.0"
+        "revision" : "4adea350c4389f3d8c76dc75962a22802129dd4c",
+        "version" : "0.2.0"
       }
     }
   ],

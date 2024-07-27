@@ -1,10 +1,13 @@
 import Foundation
+import SwiftHTTP
 
-public enum MintyError: Error {
+public enum MintyError: Swift.Error {
     case serverError
-    case networkError(cause: Error)
+    case networkError(cause: Swift.Error)
     case invalidData(message: String)
     case notFound(entity: String, id: UUID)
+    case unauthenticated(message: String?)
+    case alreadyExists(message: String)
     case other(message: String)
 
     static func parseNotFound(message: String) -> Self {

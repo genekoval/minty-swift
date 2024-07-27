@@ -6,6 +6,7 @@ public struct About: Codable {
 
 public struct Comment: Codable, Hashable, Identifiable {
     public var id: UUID
+    public var user: UserPreview?
     public var postId: UUID
     public var parentId: UUID?
     public var level: Int
@@ -15,9 +16,30 @@ public struct Comment: Codable, Hashable, Identifiable {
 
 public struct CommentData: Codable, Hashable, Identifiable {
     public var id: UUID
+    public var user: UserPreview?
     public var content: String
     public var level: Int
     public var created: Date
+}
+
+public struct EntityProfile: Codable, Hashable {
+    public var name: String
+    public var aliases: [String]
+    public var description: String
+    public var sources: [Source]
+    public var avatar: UUID?
+    public var banner: UUID?
+    public var created: Date
+}
+
+public struct Login: Codable {
+    public var email: String
+    public var password: String
+
+    public init(email: String, password: String) {
+        self.email = email
+        self.password = password
+    }
 }
 
 public struct Modification<T: Codable>: Codable {
@@ -59,6 +81,7 @@ public struct ObjectSummary: Codable {
 
 public struct Post: Codable, Hashable, Identifiable {
     public var id: UUID
+    public var poster: UserPreview?
     public var title: String
     public var description: String
     public var visibility: Visibility
@@ -97,6 +120,7 @@ public struct PostParts: Codable {
 
 public struct PostPreview: Codable, Hashable, Identifiable {
     public var id: UUID
+    public var poster: UserPreview?
     public var title: String
     public var preview: ObjectPreview?
     public var commentCount: Int
@@ -142,6 +166,7 @@ public struct PostQuery {
 
     public var from: Int
     public var size: Int
+    public var poster: UUID?
     public var text: String
     public var tags: [UUID]
     public var visibility: Visibility
@@ -150,6 +175,7 @@ public struct PostQuery {
     public init(
         from: Int = 0,
         size: Int,
+        poster: UUID? = nil,
         text: String = "",
         tags: [UUID] = [],
         visibility: Visibility = .pub,
@@ -157,6 +183,7 @@ public struct PostQuery {
     ) {
         self.from = from
         self.size = size
+        self.poster = poster
         self.text = text
         self.tags = tags
         self.visibility = visibility
@@ -164,9 +191,45 @@ public struct PostQuery {
     }
 }
 
+public struct ProfileName: Codable, Hashable {
+    public var name: String
+    public var aliases: [String]
+}
+
+public struct ProfileQuery: Hashable {
+    public var from: Int
+    public var size: Int
+    public var name: String
+    public var exclude: [UUID]
+
+    public init(
+        from: Int = 0,
+        size: Int,
+        name: String = "",
+        exclude: [UUID] = []
+    ) {
+        self.from = from
+        self.size = size
+        self.name = name
+        self.exclude = exclude
+    }
+}
+
 public struct SearchResult<T: Codable>: Codable {
     public var hits: [T]
     public var total: Int
+}
+
+public struct SignUp: Codable {
+    public var username: String
+    public var email: String
+    public var password: String
+
+    public init(username: String, email: String, password: String) {
+        self.username = username
+        self.email = email
+        self.password = password
+    }
 }
 
 public enum SortOrder: String {
@@ -186,19 +249,9 @@ public struct Source: Codable, Hashable, Identifiable {
 
 public struct Tag: Codable, Hashable, Identifiable {
     public var id: UUID
-    public var name: String
-    public var aliases: [String]
-    public var description: String
-    public var avatar: UUID?
-    public var banner: UUID?
-    public var sources: [Source]
+    public var profile: EntityProfile
+    public var creator: UserPreview?
     public var postCount: Int
-    public var created: Date
-}
-
-public struct TagName: Codable, Hashable {
-    public var name: String
-    public var aliases: [String]
 }
 
 public struct TagPreview: Codable, Hashable, Identifiable {
@@ -207,22 +260,25 @@ public struct TagPreview: Codable, Hashable, Identifiable {
     public var avatar: UUID?
 }
 
-public struct TagQuery: Hashable {
-    public var from: Int
-    public var size: Int
-    public var name: String
-    public var exclude: [UUID]
+public struct User: Codable, Hashable, Identifiable {
+    public var id: UUID
+    public var email: String
+    public var admin: Bool
+    public var profile: EntityProfile
+    public var postCount: Int
+    public var commentCount: Int
+    public var tagCount: Int
+}
 
-    public init(
-        from: Int = 0,
-        size: Int,
-        name: String = "",
-        exclude: [UUID] = []
-    ) {
-        self.from = from
-        self.size = size
+public struct UserPreview: Codable, Hashable, Identifiable {
+    public var id: UUID
+    public var name: String
+    public var avatar: UUID?
+
+    public init(id: UUID, name: String, avatar: UUID? = nil) {
+        self.id = id
         self.name = name
-        self.exclude = exclude
+        self.avatar = avatar
     }
 }
 

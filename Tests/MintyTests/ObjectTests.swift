@@ -1,7 +1,7 @@
 import CryptoKit
 import XCTest
 
-final class ObjectTests: XCTestCase {
+final class ObjectTests: MintyTests {
     func testDownload() async throws {
         let url = try await repo.download(object: Objects.sand)
         let data = try Data(contentsOf: url)

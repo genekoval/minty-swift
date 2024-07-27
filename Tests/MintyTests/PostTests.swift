@@ -1,31 +1,31 @@
 import XCTest
 @testable import Minty
 
-private func createPost() async throws -> Post.ID {
-    try await repo.createPost(parts: PostParts())
-}
+final class PostTests: MintyTests {
+    private func createPost() async throws -> Post.ID {
+        try await repo.createPost(parts: PostParts())
+    }
 
-private func find(
-    query: consuming PostQuery,
-    expect expected: [UUID]
-) async throws {
-    query.tags.append(Tags.languages)
+    private func find(
+        query: consuming PostQuery,
+        expect expected: [UUID]
+    ) async throws {
+        query.tags.append(Tags.languages)
 
-    let result = try await repo.getPosts(query: query)
-    XCTAssertEqual(expected.count, result.hits.count)
+        let result = try await repo.getPosts(query: query)
+        XCTAssertEqual(expected.count, result.hits.count)
 
-    let hits = result.hits.map(\.id)
-    XCTAssertEqual(expected, hits)
-}
+        let hits = result.hits.map(\.id)
+        XCTAssertEqual(expected, hits)
+    }
 
-private func findText(_ text: String, expect expected: [UUID]) async throws {
-    try await find(
-        query: .init(size: 10_000, text: text, sort: .title),
-        expect: expected
-    )
-}
+    private func findText(_ text: String, expect expected: [UUID]) async throws {
+        try await find(
+            query: .init(size: 10_000, text: text, sort: .title),
+            expect: expected
+        )
+    }
 
-final class PostTests: XCTestCase {
     func testAddPostTag() async throws {
         let post = try await createPost()
         let tag = Tags.videos
